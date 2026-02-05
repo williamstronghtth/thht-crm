@@ -11,6 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^12.6.2",
     "express": "^5.2.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/williamstronghtth/thht-crm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/williamstronghtth/thht-crm/issues"
+  },
+  "homepage": "https://github.com/williamstronghtth/thht-crm#readme"
 }
