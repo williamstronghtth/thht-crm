@@ -37,7 +37,12 @@ db.exec(`
 `);
 
 // Parse CSV
-const csv = fs.readFileSync(path.join(__dirname, '..', 'client_list_raw.csv'), 'utf-8');
+// Try current dir first, then parent dir
+let csvPath = path.join(__dirname, 'client_list_raw.csv');
+if (!fs.existsSync(csvPath)) {
+  csvPath = path.join(__dirname, '..', 'client_list_raw.csv');
+}
+const csv = fs.readFileSync(csvPath, 'utf-8');
 const lines = csv.split('\n');
 
 // Source mapping from section headers
