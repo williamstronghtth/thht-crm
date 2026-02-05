@@ -5,103 +5,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>THHT CRM — The Hoover Home Team</title>
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/jpeg" href="/logo.jpg">
   <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #334155;
+      --border: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --urgent: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Jost', sans-serif; background: #f5f7fa; color: #333; }
+    body { font-family: 'Jost', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     
     /* Header */
-    .header { background: #1a1a2e; color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    .header-left { display: flex; align-items: center; gap: 16px; }
-    .header h1 { font-size: 22px; font-weight: 600; }
-    .header h1 span { color: #e8b931; }
-    .header-stats { display: flex; gap: 20px; font-size: 14px; }
+    .header { background: var(--surface); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left img { height: 36px; border-radius: 6px; }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header h1 span { font-size: 14px; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+    .header-stats { display: flex; gap: 24px; }
     .header-stat { text-align: center; }
-    .header-stat .num { font-size: 24px; font-weight: 700; color: #e8b931; }
-    .header-stat .label { opacity: 0.7; font-size: 12px; }
+    .header-stat .num { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .header-stat .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .header-stat.alert .num { color: var(--urgent); }
     
     /* Layout */
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     
     /* Toolbar */
-    .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-    .toolbar input[type="text"] { padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: 'Jost'; width: 280px; }
-    .toolbar select { padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: 'Jost'; background: white; }
-    .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Jost'; font-size: 14px; font-weight: 500; transition: all 0.2s; }
-    .btn-primary { background: #1a1a2e; color: white; }
-    .btn-primary:hover { background: #2d2d4e; }
-    .btn-gold { background: #e8b931; color: #1a1a2e; }
-    .btn-gold:hover { background: #d4a82a; }
-    .btn-danger { background: #e74c3c; color: white; }
-    .btn-danger:hover { background: #c0392b; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-    .btn-outline { background: transparent; border: 1px solid #ddd; color: #666; }
-    .btn-outline:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .toolbar input[type="text"] { padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Jost'; width: 260px; background: var(--surface); color: var(--text); }
+    .toolbar input[type="text"]::placeholder { color: var(--text-muted); }
+    .toolbar select { padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Jost'; background: var(--surface); color: var(--text); }
+    .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Jost'; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-gold { background: var(--accent); color: white; }
+    .btn-gold:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--urgent); color: white; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
     
     /* Pipeline View */
-    .pipeline { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 20px; }
-    .pipeline-stage { flex: 0 0 auto; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; background: white; border: 2px solid #e0e0e0; transition: all 0.2s; }
-    .pipeline-stage:hover { border-color: #1a1a2e; }
-    .pipeline-stage.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
-    .pipeline-stage .count { display: inline-block; background: rgba(232,185,49,0.2); color: #b8941e; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-size: 11px; font-weight: 700; }
-    .pipeline-stage.active .count { background: rgba(232,185,49,0.3); color: #e8b931; }
+    .pipeline { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
+    .pipeline-stage { flex: 0 0 auto; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.2s; }
+    .pipeline-stage:hover { border-color: var(--accent); color: var(--text); }
+    .pipeline-stage.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .pipeline-stage .count { display: inline-block; background: rgba(255,255,255,0.15); padding: 1px 7px; border-radius: 10px; margin-left: 5px; font-size: 11px; font-weight: 700; }
+    .pipeline-stage.active .count { background: rgba(255,255,255,0.25); }
     
     /* Client Table */
-    .client-table { width: 100%; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .client-table { width: 100%; background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
     .client-table table { width: 100%; border-collapse: collapse; }
-    .client-table th { background: #f8f9fa; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #888; border-bottom: 2px solid #eee; }
-    .client-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-    .client-table tr:hover { background: #fafbfc; cursor: pointer; }
-    .client-name { font-weight: 600; color: #1a1a2e; }
-    .stage-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-    .stage-Lead { background: #e3f2fd; color: #1565c0; }
-    .stage-Active-Buyer, .stage-Active-Seller { background: #fff3e0; color: #e65100; }
-    .stage-Under-Contract { background: #f3e5f5; color: #7b1fa2; }
-    .stage-Closed { background: #e8f5e9; color: #2e7d32; }
-    .stage-Past-Client { background: #f5f5f5; color: #616161; }
-    .follow-up-flag { color: #e74c3c; font-weight: 600; font-size: 12px; }
-    .no-clients { text-align: center; padding: 60px 20px; color: #999; }
-    .no-clients h3 { font-size: 18px; margin-bottom: 8px; }
+    .client-table th { background: rgba(0,0,0,0.2); padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .client-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+    .client-table tr:hover { background: var(--surface-hover); cursor: pointer; }
+    .client-table tr:last-child td { border-bottom: none; }
+    .client-name { font-weight: 600; }
+    .stage-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .stage-Lead { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .stage-Active-Buyer { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .stage-Active-Seller { background: rgba(168,85,247,0.15); color: #c084fc; }
+    .stage-Under-Contract { background: rgba(236,72,153,0.15); color: #f472b6; }
+    .stage-Closed { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .stage-Past-Client { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .follow-up-flag { color: var(--urgent); font-weight: 600; font-size: 12px; }
+    .no-clients { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .no-clients h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
     
     /* Modal */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-overlay.show { display: flex; }
-    .modal { background: white; border-radius: 16px; padding: 28px; width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-    .modal h2 { font-size: 20px; margin-bottom: 20px; color: #1a1a2e; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Jost'; font-size: 14px; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+    .modal h2 { font-size: 20px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.5px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Jost'; font-size: 13px; background: var(--bg); color: var(--text); }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
     .form-group textarea { height: 80px; resize: vertical; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
     
     /* Client Detail */
     .detail-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
-    .detail-header h2 { font-size: 24px; }
-    .detail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .detail-header h2 { font-size: 22px; }
+    .detail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); }
     .detail-info .info-item { font-size: 14px; }
-    .detail-info .info-label { color: #888; font-size: 12px; }
+    .detail-info .info-label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .notes-box { margin-bottom: 16px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 13px; border: 1px solid var(--border); }
     
     /* Activity Feed */
-    .activity-section { margin-top: 24px; }
-    .activity-section h3 { font-size: 16px; margin-bottom: 12px; }
+    .activity-section { margin-top: 20px; }
+    .activity-section h3 { font-size: 15px; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; }
     .activity-form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .activity-form select { width: 140px; }
-    .activity-form input { flex: 1; min-width: 200px; }
-    .activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; align-items: start; }
-    .activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-    .activity-icon.Call { background: #e3f2fd; }
-    .activity-icon.Email { background: #fff3e0; }
-    .activity-icon.Text { background: #e8f5e9; }
-    .activity-icon.Showing { background: #f3e5f5; }
-    .activity-icon.Meeting { background: #fce4ec; }
-    .activity-icon.Note { background: #f5f5f5; }
-    .activity-icon.Follow-up { background: #fff8e1; }
+    .activity-form select { width: 130px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Jost'; font-size: 13px; background: var(--bg); color: var(--text); }
+    .activity-form input { flex: 1; min-width: 200px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Jost'; font-size: 13px; background: var(--bg); color: var(--text); }
+    .activity-form input::placeholder { color: var(--text-muted); }
+    .activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: start; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; background: var(--bg); }
     .activity-content { flex: 1; }
-    .activity-content .type { font-weight: 600; font-size: 13px; }
-    .activity-content .desc { font-size: 14px; color: #555; }
-    .activity-content .date { font-size: 11px; color: #aaa; }
-    .activity-delete { cursor: pointer; color: #ccc; font-size: 12px; }
-    .activity-delete:hover { color: #e74c3c; }
+    .activity-content .type { font-weight: 600; font-size: 12px; color: var(--accent); }
+    .activity-content .desc { font-size: 13px; }
+    .activity-content .date { font-size: 11px; color: var(--text-muted); }
+    .activity-delete { cursor: pointer; color: var(--text-muted); font-size: 12px; opacity: 0.5; }
+    .activity-delete:hover { color: var(--urgent); opacity: 1; }
     
     @media (max-width: 768px) {
       .toolbar { flex-direction: column; }
@@ -115,7 +131,8 @@
 <body>
   <div class="header">
     <div class="header-left">
-      <h1>🏠 <span>THHT</span> CRM</h1>
+      <img src="/logo.jpg" alt="THHT">
+      <h1>CRM<span>The Hoover Home Team</span></h1>
     </div>
     <div class="header-stats" id="headerStats"></div>
   </div>
@@ -133,7 +150,7 @@
         <option value="created">Sort by Date Added</option>
       </select>
       <div style="flex:1"></div>
-      <button class="btn btn-gold" onclick="openAddModal()">+ Add Client</button>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Add Client</button>
     </div>
     
     <div class="pipeline" id="pipeline"></div>
@@ -208,11 +225,9 @@
       ]);
       clients = c; stages = s; activityTypes = a;
       
-      // Populate stage filter
       const sf = document.getElementById('stageFilter');
       sf.innerHTML = '<option value="">All Stages</option>' + stages.map(s => `<option value="${s}">${s}</option>`).join('');
       
-      // Populate stage select in modal
       const cs = document.getElementById('clientStage');
       cs.innerHTML = stages.map(s => `<option value="${s}">${s}</option>`).join('');
       
@@ -235,7 +250,7 @@
       stats.innerHTML = `
         <div class="header-stat"><div class="num">${total}</div><div class="label">Total Clients</div></div>
         <div class="header-stat"><div class="num">${active}</div><div class="label">Active</div></div>
-        <div class="header-stat"><div class="num" style="color:${needsFollow > 0 ? '#e74c3c' : '#e8b931'}">${needsFollow}</div><div class="label">Need Follow-up</div></div>
+        <div class="header-stat ${needsFollow > 0 ? 'alert' : ''}"><div class="num">${needsFollow}</div><div class="label">Need Follow-up</div></div>
       `;
     }
     
@@ -396,7 +411,7 @@
         <div class="detail-header">
           <div>
             <h2>${esc(c.name)}</h2>
-            <span class="stage-badge ${stageClass}">${c.stage}</span>
+            <span class="stage-badge ${stageClass}" style="margin-top:6px;display:inline-block">${c.stage}</span>
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-sm btn-outline" onclick="openEditModal('${c.id}')">✏️ Edit</button>
@@ -410,7 +425,7 @@
           <div class="info-item"><div class="info-label">Address</div>${esc(c.address) || '—'}</div>
           <div class="info-item"><div class="info-label">Source</div>${esc(c.source) || '—'}</div>
         </div>
-        ${c.notes ? `<div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:14px"><strong>Notes:</strong> ${esc(c.notes)}</div>` : ''}
+        ${c.notes ? `<div class="notes-box"><strong>Notes:</strong> ${esc(c.notes)}</div>` : ''}
         <div class="activity-section">
           <h3>Activity Log</h3>
           <div class="activity-form">
@@ -421,7 +436,7 @@
           <div id="activityFeed">
             ${(c.activities || []).map(a => `
               <div class="activity-item">
-                <div class="activity-icon ${a.type}">${ICONS[a.type] || '📋'}</div>
+                <div class="activity-icon">${ICONS[a.type] || '📋'}</div>
                 <div class="activity-content">
                   <div class="type">${a.type}</div>
                   <div class="desc">${esc(a.description)}</div>
@@ -429,7 +444,7 @@
                 </div>
                 <div class="activity-delete" onclick="event.stopPropagation();deleteActivity('${c.id}','${a.id}')">✕</div>
               </div>
-            `).join('') || '<div style="color:#999;padding:20px 0;text-align:center">No activities yet. Log your first interaction above.</div>'}
+            `).join('') || '<div style="color:var(--text-muted);padding:20px 0;text-align:center">No activities yet. Log your first interaction above.</div>'}
           </div>
         </div>
       `;
@@ -462,7 +477,6 @@
       renderClients();
     }
     
-    // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('show');
