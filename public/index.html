@@ -3,91 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Hoover Home Team — CRM</title>
+<title>THHT CRM — The Hoover Home Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/jpeg" href="/logo.jpg">
 <style>
 :root {
-  --navy: #1a3c5e;
-  --navy-light: #2a5580;
-  --gold: #c9a84c;
-  --green: #27ae60;
-  --orange: #f39c12;
-  --red: #e74c3c;
-  --blue: #3498db;
-  --purple: #9b59b6;
-  --gray: #95a5a6;
-  --bg: #f5f6fa;
-  --card: #ffffff;
-  --text: #2c3e50;
-  --text-light: #7f8c8d;
-  --border: #e1e5eb;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+body {
+  font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
 
 /* Header */
 .header {
-  background: var(--navy);
-  color: white;
-  padding: 12px 20px;
+  background: var(--surface);
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  border-bottom: 1px solid var(--border);
 }
 .header-left { display: flex; align-items: center; gap: 12px; }
+.header-left img { height: 36px; width: 36px; border-radius: 6px; object-fit: cover; }
 .header h1 { font-size: 20px; font-weight: 600; }
-.header .subtitle { font-size: 12px; color: var(--gold); font-weight: 400; }
+.header h1 span { font-size: 14px; color: var(--text-muted); font-weight: 400; display: block; }
 
 /* Nav Tabs */
-.nav-tabs {
-  display: flex;
-  gap: 4px;
-  background: rgba(255,255,255,0.1);
-  padding: 4px;
-  border-radius: 8px;
-}
+.nav-tabs { display: flex; gap: 4px; }
 .nav-tab {
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(255,255,255,0.7);
-  transition: all 0.2s;
-  border: none;
-  background: none;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: transparent;
   font-family: inherit;
 }
-.nav-tab:hover { color: white; background: rgba(255,255,255,0.1); }
-.nav-tab.active { color: var(--navy); background: white; }
+.nav-tab:hover { background: var(--surface-hover); color: var(--text); }
+.nav-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
 
 /* Main Content */
 .main { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
-/* Dashboard */
+/* Dashboard Stats */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 .stat-card {
-  background: var(--card);
+  background: var(--surface);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   text-align: center;
 }
-.stat-number { font-size: 36px; font-weight: 700; color: var(--navy); }
-.stat-label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
-.stat-card.alert .stat-number { color: var(--red); }
-.stat-card.success .stat-number { color: var(--green); }
+.stat-number { font-size: 36px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.stat-card.alert .stat-number { color: var(--danger); }
+.stat-card.success .stat-number { color: var(--success); }
 
 /* Pipeline */
 .pipeline {
@@ -97,10 +98,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   margin-bottom: 24px;
 }
 .pipeline-col {
-  background: var(--card);
+  background: var(--surface);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   min-height: 200px;
 }
 .pipeline-header {
@@ -118,12 +119,13 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--text-muted);
 }
-.stage-lead .pipeline-header { border-color: var(--blue); }
-.stage-active .pipeline-header { border-color: var(--green); }
-.stage-contract .pipeline-header { border-color: var(--orange); }
-.stage-closed .pipeline-header { border-color: var(--gold); }
-.stage-past .pipeline-header { border-color: var(--gray); }
+.stage-lead .pipeline-header { border-color: var(--accent); }
+.stage-active .pipeline-header { border-color: var(--success); }
+.stage-contract .pipeline-header { border-color: var(--warning); }
+.stage-closed .pipeline-header { border-color: var(--purple); }
+.stage-past .pipeline-header { border-color: var(--text-muted); }
 
 .pipeline-card {
   background: var(--bg);
@@ -131,24 +133,25 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   padding: 10px 12px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   border-left: 3px solid transparent;
+  border: 1px solid var(--border);
 }
-.pipeline-card:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.pipeline-card:hover { background: var(--surface-hover); transform: translateY(-1px); }
 .pipeline-card .name { font-weight: 600; font-size: 14px; }
 .pipeline-card .source-tag {
   font-size: 11px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
-  background: var(--navy);
+  background: var(--accent);
   color: white;
   display: inline-block;
-  margin-top: 4px;
+  margin-top: 6px;
 }
-.pipeline-card.has-followup { border-left-color: var(--orange); }
-.pipeline-card.overdue { border-left-color: var(--red); }
+.pipeline-card.has-followup { border-left: 3px solid var(--warning); }
+.pipeline-card.overdue { border-left: 3px solid var(--danger); }
 
-/* Contact List */
+/* Toolbar */
 .toolbar {
   display: flex;
   gap: 12px;
@@ -160,24 +163,29 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   flex: 1;
   min-width: 200px;
   padding: 10px 16px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 15px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s;
 }
-.search-box:focus { border-color: var(--navy); }
+.search-box:focus { border-color: var(--accent); }
+.search-box::placeholder { color: var(--text-muted); }
 .filter-select {
   padding: 10px 12px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
-  background: white;
+  background: var(--surface);
+  color: var(--text);
   cursor: pointer;
   outline: none;
 }
+.filter-select:focus { border-color: var(--accent); }
 .btn {
   padding: 10px 20px;
   border: none;
@@ -186,38 +194,41 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
-.btn-primary { background: var(--navy); color: white; }
-.btn-primary:hover { background: var(--navy-light); }
-.btn-success { background: var(--green); color: white; }
-.btn-danger { background: var(--red); color: white; }
-.btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
-.btn-outline:hover { background: var(--navy); color: white; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--surface-hover); border-color: var(--accent); }
 .btn-sm { padding: 6px 12px; font-size: 13px; }
 
 /* Contact Table */
 .contact-table {
   width: 100%;
-  background: var(--card);
+  background: var(--surface);
   border-radius: 12px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .contact-table table { width: 100%; border-collapse: collapse; }
 .contact-table th {
-  background: var(--navy);
-  color: white;
+  background: var(--bg);
+  color: var(--text);
   padding: 12px 16px;
   text-align: left;
   font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
-  user-select: none;
+  border-bottom: 1px solid var(--border);
 }
-.contact-table th:hover { background: var(--navy-light); }
-.contact-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
-.contact-table tr:hover td { background: #f8f9ff; }
+.contact-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text);
+}
+.contact-table tr:hover td { background: var(--surface-hover); }
 .contact-table tr { cursor: pointer; }
 
 .stage-badge {
@@ -227,18 +238,18 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   font-weight: 600;
   text-transform: uppercase;
 }
-.stage-badge.lead { background: #e8f4fd; color: var(--blue); }
-.stage-badge.active { background: #e8f8ef; color: var(--green); }
-.stage-badge.contract { background: #fef5e7; color: var(--orange); }
-.stage-badge.closed { background: #fdf6e3; color: #8b6914; }
-.stage-badge.past { background: #f0f0f0; color: var(--gray); }
+.stage-badge.lead { background: rgba(59,130,246,0.2); color: var(--accent); }
+.stage-badge.active { background: rgba(34,197,94,0.2); color: var(--success); }
+.stage-badge.contract { background: rgba(245,158,11,0.2); color: var(--warning); }
+.stage-badge.closed { background: rgba(139,92,246,0.2); color: var(--purple); }
+.stage-badge.past { background: rgba(148,163,184,0.2); color: var(--text-muted); }
 
 /* Modal */
 .modal-overlay {
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7);
   z-index: 200;
   align-items: center;
   justify-content: center;
@@ -246,13 +257,14 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
 }
 .modal-overlay.active { display: flex; }
 .modal {
-  background: white;
+  background: var(--surface);
   border-radius: 16px;
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
 }
 .modal-header {
   padding: 20px 24px;
@@ -262,35 +274,39 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--surface);
   border-radius: 16px 16px 0 0;
   z-index: 1;
 }
 .modal-header h2 { font-size: 20px; font-weight: 600; }
-.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); padding: 4px 8px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); padding: 4px 8px; }
+.modal-close:hover { color: var(--text); }
 .modal-body { padding: 24px; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .form-group { margin-bottom: 16px; }
 .form-group.full { grid-column: 1 / -1; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
 }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
 .form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
 
 /* Activity Log */
 .activity-log { margin-top: 20px; }
-.activity-log h3 { font-size: 16px; margin-bottom: 12px; color: var(--navy); }
+.activity-log h3 { font-size: 16px; margin-bottom: 12px; color: var(--text); }
 .activity-item {
   display: flex;
   gap: 12px;
@@ -302,24 +318,43 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--navy);
+  background: var(--accent);
   margin-top: 5px;
   flex-shrink: 0;
 }
-.activity-time { color: var(--text-light); font-size: 12px; }
+.activity-time { color: var(--text-muted); font-size: 12px; }
 .add-activity { display: flex; gap: 8px; margin-top: 12px; }
 .add-activity input { flex: 1; }
+
+/* Section Headers */
+.section-header {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* Hidden sections */
 .view { display: none; }
 .view.active { display: block; }
+
+/* Recent Activity Card */
+.activity-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
 
 /* Responsive */
 @media (max-width: 768px) {
   .pipeline { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .nav-tabs { display: none; }
-  .header { flex-direction: column; gap: 8px; }
+  .header { flex-direction: column; gap: 12px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .contact-table { overflow-x: auto; }
 }
@@ -332,10 +367,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
 
 <div class="header">
   <div class="header-left">
-    <div>
-      <h1>🏠 The Hoover Home Team</h1>
-      <div class="subtitle">Client Relationship Manager</div>
-    </div>
+    <img src="/logo.jpg" alt="THHT">
+    <h1>THHT CRM <span>The Hoover Home Team</span></h1>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchView('dashboard')">📊 Dashboard</button>
@@ -349,10 +382,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
   <!-- Dashboard View -->
   <div id="view-dashboard" class="view active">
     <div class="stats-grid" id="stats-grid"></div>
-    <h3 style="margin-bottom:12px; color:var(--navy);">📈 Pipeline Overview</h3>
+    <div class="section-header">📈 Pipeline Overview</div>
     <div class="pipeline" id="dashboard-pipeline"></div>
-    <h3 style="margin:24px 0 12px; color:var(--navy);">🕐 Recent Activity</h3>
-    <div id="recent-activity" style="background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);"></div>
+    <div class="section-header" style="margin-top:24px;">🕐 Recent Activity</div>
+    <div id="recent-activity" class="activity-card"></div>
   </div>
 
   <!-- Pipeline View -->
@@ -376,7 +409,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--text
         <option value="all">All Sources</option>
       </select>
       <button class="btn btn-primary" onclick="openNewContact()">+ Add Contact</button>
-      <a href="/api/export" class="btn btn-outline">⬇ Export CSV</a>
+      <a href="/api/export" class="btn btn-outline">⬇ Export</a>
     </div>
     <div class="contact-table" id="contact-table"></div>
   </div>
@@ -513,27 +546,25 @@ function switchView(view) {
 async function loadDashboard() {
   const stats = await fetch('/api/stats').then(r => r.json());
   
-  const stages = { lead: 'Leads', active: 'Active', contract: 'Under Contract', closed: 'Closed', past: 'Past Clients' };
+  const stages = { lead: 'Leads', active: 'Active', contract: 'Contract', closed: 'Closed', past: 'Past' };
   
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card"><div class="stat-number">${stats.total}</div><div class="stat-label">Total Contacts</div></div>
     <div class="stat-card success"><div class="stat-number">${stats.withEmail}</div><div class="stat-label">With Email</div></div>
     <div class="stat-card"><div class="stat-number">${stats.withPhone}</div><div class="stat-label">With Phone</div></div>
-    <div class="stat-card ${stats.overdueFollowups > 0 ? 'alert' : ''}"><div class="stat-number">${stats.overdueFollowups}</div><div class="stat-label">Overdue Follow-Ups</div></div>
+    <div class="stat-card ${stats.overdueFollowups > 0 ? 'alert' : ''}"><div class="stat-number">${stats.overdueFollowups}</div><div class="stat-label">Overdue</div></div>
     <div class="stat-card"><div class="stat-number">${stats.upcomingFollowups}</div><div class="stat-label">This Week</div></div>
     ${Object.entries(stages).map(([k,v]) => `
       <div class="stat-card"><div class="stat-number">${stats.stages[k] || 0}</div><div class="stat-label">${v}</div></div>
     `).join('')}
   `;
 
-  // Load pipeline preview
   const contacts = await fetch('/api/contacts').then(r => r.json());
   renderPipeline('dashboard-pipeline', contacts, 3);
 
-  // Recent activity
   document.getElementById('recent-activity').innerHTML = stats.recentActivity.length === 0 
-    ? '<p style="color:var(--text-light);">No recent activity</p>'
-    : stats.recentActivity.map(a => `
+    ? '<p style="color:var(--text-muted);">No recent activity</p>'
+    : stats.recentActivity.slice(0, 5).map(a => `
       <div class="activity-item">
         <div class="activity-dot"></div>
         <div>
@@ -577,11 +608,11 @@ function renderPipeline(containerId, contacts, limit) {
             <div class="pipeline-card ${isOverdue ? 'overdue' : hasFU ? 'has-followup' : ''}" onclick="openContact(${c.id})">
               <div class="name">${c.first_name} ${c.last_name}</div>
               ${c.source ? `<span class="source-tag">${c.source}</span>` : ''}
-              ${isOverdue ? '<div style="color:var(--red);font-size:11px;margin-top:4px;">⚠️ Follow-up overdue</div>' : ''}
+              ${isOverdue ? '<div style="color:var(--danger);font-size:11px;margin-top:4px;">⚠️ Follow-up overdue</div>' : ''}
             </div>
           `;
         }).join('')}
-        ${total > limit ? `<div style="text-align:center;color:var(--text-light);font-size:13px;margin-top:8px;">+${total - limit} more</div>` : ''}
+        ${total > limit ? `<div style="text-align:center;color:var(--text-muted);font-size:13px;margin-top:8px;">+${total - limit} more</div>` : ''}
       </div>
     `;
   }).join('');
@@ -614,7 +645,7 @@ async function loadContacts() {
         </tr>
       </thead>
       <tbody>
-        ${contacts.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:40px;">No contacts found</td></tr>' : ''}
+        ${contacts.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">No contacts found</td></tr>' : ''}
         ${contacts.map(c => `
           <tr onclick="openContact(${c.id})">
             <td><strong>${c.first_name} ${c.last_name}</strong></td>
@@ -627,7 +658,7 @@ async function loadContacts() {
         `).join('')}
       </tbody>
     </table>
-    <div style="padding:12px 16px;color:var(--text-light);font-size:13px;">${contacts.length} contact${contacts.length !== 1 ? 's' : ''}</div>
+    <div style="padding:12px 16px;color:var(--text-muted);font-size:13px;">${contacts.length} contact${contacts.length !== 1 ? 's' : ''}</div>
   `;
 }
 
@@ -648,11 +679,11 @@ async function loadFollowups() {
         </tr>
       </thead>
       <tbody>
-        ${contacts.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:40px;">No follow-ups found 🎉</td></tr>' : ''}
+        ${contacts.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:40px;">No follow-ups found 🎉</td></tr>' : ''}
         ${contacts.map(c => `
           <tr onclick="openContact(${c.id})">
             <td><strong>${c.first_name} ${c.last_name}</strong></td>
-            <td style="color:${c.follow_up_date <= new Date().toISOString().split('T')[0] ? 'var(--red)' : 'inherit'}">${c.follow_up_date}</td>
+            <td style="color:${c.follow_up_date <= new Date().toISOString().split('T')[0] ? 'var(--danger)' : 'inherit'}">${c.follow_up_date}</td>
             <td>${c.follow_up_note || c.notes?.substring(0, 60) || '—'}</td>
             <td>${c.phone || '—'}</td>
             <td><span class="stage-badge ${c.stage}">${c.stage}</span></td>
@@ -701,7 +732,7 @@ async function openContact(id) {
         <div class="activity-time">${new Date(a.created_at).toLocaleString()}</div>
       </div>
     </div>
-  `).join('') || '<p style="color:var(--text-light);">No activities yet</p>';
+  `).join('') || '<p style="color:var(--text-muted);">No activities yet</p>';
 
   document.getElementById('contact-modal').classList.add('active');
 }
@@ -771,7 +802,6 @@ function refreshCurrentView() {
   else if (activeView === 'followups') loadFollowups();
 }
 
-// Load source filter options
 async function loadSourceOptions() {
   const stats = await fetch('/api/stats').then(r => r.json());
   const sel = document.getElementById('filter-source');
@@ -779,17 +809,14 @@ async function loadSourceOptions() {
     stats.sources.map(s => `<option value="${s.source}">${s.source} (${s.count})</option>`).join('');
 }
 
-// Close modal on overlay click
 document.getElementById('contact-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
-// Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-// Init
 loadDashboard();
 loadSourceOptions();
 </script>
