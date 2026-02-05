@@ -1,0 +1,5 @@
+{
+  "clients": [],
+  "stages": ["Lead", "Active Buyer", "Active Seller", "Under Contract", "Closed", "Past Client"],
+  "activityTypes": ["Call", "Email", "Text", "Showing", "Meeting", "Note", "Follow-up"]
+}
