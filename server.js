@@ -6,8 +6,21 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Database setup
-const db = new Database(path.join(__dirname, 'crm.db'));
+const dbPath = path.join(__dirname, 'crm.db');
+const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
+
+// Check if we need to reset the database (schema mismatch)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(contacts)").all();
+  const columns = tableInfo.map(c => c.name);
+  if (tableInfo.length > 0 && !columns.includes('stage')) {
+    console.log('Schema mismatch detected, recreating database...');
+    db.exec('DROP TABLE IF EXISTS activities; DROP TABLE IF EXISTS contacts;');
+  }
+} catch (e) {
+  console.log('Fresh database, creating tables...');
+}
 
 // Create tables
 db.exec(`

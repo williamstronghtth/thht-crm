@@ -5,6 +5,18 @@ const path = require('path');
 const db = new Database(path.join(__dirname, 'crm.db'));
 db.pragma('journal_mode = WAL');
 
+// Check if we need to reset the database (schema mismatch)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(contacts)").all();
+  const columns = tableInfo.map(c => c.name);
+  if (tableInfo.length > 0 && !columns.includes('stage')) {
+    console.log('Schema mismatch detected, recreating database...');
+    db.exec('DROP TABLE IF EXISTS activities; DROP TABLE IF EXISTS contacts;');
+  }
+} catch (e) {
+  console.log('Fresh database, creating tables...');
+}
+
 // Create tables first (same as server.js)
 db.exec(`
   CREATE TABLE IF NOT EXISTS contacts (
