@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THHT CRM — The Hoover Home Team</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #334155;
+      --border: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --lead: #8b5cf6;
+      --active: #06b6d4;
+      --contract: #f59e0b;
+      --closed: #22c55e;
+      --past: #64748b;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-box {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      width: 250px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .stat-card {
+      padding: 12px 20px;
+      background: var(--bg);
+      border-radius: 8px;
+      min-width: 120px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border);
+    }
+
+    .stat-card.active {
+      border-color: var(--accent);
+    }
+
+    .stat-card .count {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card.lead .count { color: var(--lead); }
+    .stat-card.active-stage .count { color: var(--active); }
+    .stat-card.contract .count { color: var(--contract); }
+    .stat-card.closed .count { color: var(--closed); }
+    .stat-card.past .count { color: var(--past); }
+    .stat-card.followup .count { color: var(--danger); }
+
+    main {
+      padding: 24px;
+    }
+
+    .client-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .client-table th,
+    .client-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .client-table th {
+      background: var(--bg);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .client-table tr:hover {
+      background: var(--surface-hover);
+      cursor: pointer;
+    }
+
+    .client-name {
+      font-weight: 500;
+    }
+
+    .client-email {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stage-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .stage-badge.lead { background: rgba(139, 92, 246, 0.2); color: var(--lead); }
+    .stage-badge.active { background: rgba(6, 182, 212, 0.2); color: var(--active); }
+    .stage-badge.contract { background: rgba(245, 158, 11, 0.2); color: var(--contract); }
+    .stage-badge.closed { background: rgba(34, 197, 94, 0.2); color: var(--closed); }
+    .stage-badge.past { background: rgba(100, 116, 139, 0.2); color: var(--past); }
+
+    .source-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .followup-date {
+      font-size: 13px;
+    }
+
+    .followup-date.overdue {
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .followup-date.upcoming {
+      color: var(--contract);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .activity-log {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .activity-log h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+
+    .activity-entry {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .activity-entry:last-child {
+      border-bottom: none;
+    }
+
+    .activity-time {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>THHT CRM</h1>
+    <div class="header-actions">
+      <input type="text" class="search-box" id="searchInput" placeholder="Search clients...">
+      <button class="btn btn-primary" onclick="openModal()">+ Add Client</button>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card" data-filter="all">
+      <div class="count" id="statTotal">0</div>
+      <div class="label">Total</div>
+    </div>
+    <div class="stat-card lead" data-filter="lead">
+      <div class="count" id="statLead">0</div>
+      <div class="label">Leads</div>
+    </div>
+    <div class="stat-card active-stage" data-filter="active">
+      <div class="count" id="statActive">0</div>
+      <div class="label">Active</div>
+    </div>
+    <div class="stat-card contract" data-filter="contract">
+      <div class="count" id="statContract">0</div>
+      <div class="label">Contract</div>
+    </div>
+    <div class="stat-card closed" data-filter="closed">
+      <div class="count" id="statClosed">0</div>
+      <div class="label">Closed</div>
+    </div>
+    <div class="stat-card past" data-filter="past">
+      <div class="count" id="statPast">0</div>
+      <div class="label">Past</div>
+    </div>
+    <div class="stat-card followup" data-filter="followup">
+      <div class="count" id="statFollowup">0</div>
+      <div class="label">Follow-Up</div>
+    </div>
+  </div>
+
+  <main>
+    <table class="client-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Stage</th>
+          <th>Source</th>
+          <th>Follow-Up</th>
+          <th>Last Activity</th>
+        </tr>
+      </thead>
+      <tbody id="clientList">
+      </tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <h3>No clients yet</h3>
+      <p>Click "Add Client" to get started</p>
+    </div>
+  </main>
+
+  <!-- Client Modal -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add Client</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="clientId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="firstName">
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="lastName">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" id="address">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Stage</label>
+            <select id="stage">
+              <option value="lead">Lead</option>
+              <option value="active">Active</option>
+              <option value="contract">Contract</option>
+              <option value="closed">Closed</option>
+              <option value="past">Past</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lead Source</label>
+            <select id="leadSource">
+              <option value="Cold Calling">Cold Calling</option>
+              <option value="Letter">Letter</option>
+              <option value="Sold.com">Sold.com</option>
+              <option value="Close AI">Close AI</option>
+              <option value="OPCity">OPCity</option>
+              <option value="Qazzoo">Qazzoo</option>
+              <option value="KvCORE">KvCORE</option>
+              <option value="CB Lead">CB Lead</option>
+              <option value="Door Knocking">Door Knocking</option>
+              <option value="Buyers">Buyers</option>
+              <option value="Website Home Evaluation">Website Home Evaluation</option>
+              <option value="EDDM">EDDM</option>
+              <option value="Renter">Renter</option>
+              <option value="Open House">Open House</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Follow-Up Date</label>
+            <input type="date" id="followUpDate">
+          </div>
+          <div class="form-group">
+            <label>Next Action</label>
+            <input type="text" id="nextAction" placeholder="e.g., Call back, Send email...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="notes" placeholder="Add notes about this client..."></textarea>
+        </div>
+        <div class="activity-log" id="activityLog" style="display: none;">
+          <h3>Activity Log</h3>
+          <div id="activityEntries"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteClient()">Delete</button>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn" style="background: var(--border); color: var(--text);" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveClient()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let clients = [];
+    let currentFilter = 'all';
+
+    async function loadClients() {
+      const res = await fetch('/api/clients');
+      const data = await res.json();
+      clients = data.clients;
+      renderClients();
+      loadStats();
+    }
+
+    async function loadStats() {
+      const res = await fetch('/api/stats');
+      const stats = await res.json();
+      
+      document.getElementById('statTotal').textContent = stats.total;
+      document.getElementById('statLead').textContent = stats.byStage.lead || 0;
+      document.getElementById('statActive').textContent = stats.byStage.active || 0;
+      document.getElementById('statContract').textContent = stats.byStage.contract || 0;
+      document.getElementById('statClosed').textContent = stats.byStage.closed || 0;
+      document.getElementById('statPast').textContent = stats.byStage.past || 0;
+      document.getElementById('statFollowup').textContent = stats.needsFollowUp || 0;
+    }
+
+    function renderClients() {
+      const tbody = document.getElementById('clientList');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      
+      let filtered = clients;
+      
+      // Apply stage filter
+      if (currentFilter !== 'all' && currentFilter !== 'followup') {
+        filtered = filtered.filter(c => c.stage === currentFilter);
+      }
+      
+      // Apply follow-up filter
+      if (currentFilter === 'followup') {
+        const today = new Date().toISOString().split('T')[0];
+        filtered = filtered.filter(c => c.followUpDate && c.followUpDate <= today);
+      }
+      
+      // Apply search
+      if (search) {
+        filtered = filtered.filter(c => 
+          c.firstName.toLowerCase().includes(search) ||
+          c.lastName.toLowerCase().includes(search) ||
+          c.email.toLowerCase().includes(search) ||
+          c.phone.includes(search)
+        );
+      }
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
+        document.querySelector('.client-table').style.display = 'none';
+        return;
+      }
+      
+      document.getElementById('emptyState').style.display = 'none';
+      document.querySelector('.client-table').style.display = 'table';
+      
+      tbody.innerHTML = filtered.map(c => {
+        const followUpClass = getFollowUpClass(c.followUpDate);
+        const lastActivity = c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : '-';
+        
+        return `
+          <tr onclick="openClient('${c.id}')">
+            <td>
+              <div class="client-name">${c.firstName} ${c.lastName}</div>
+              <div class="client-email">${c.email || '-'}</div>
+            </td>
+            <td>${c.phone || '-'}</td>
+            <td><span class="stage-badge ${c.stage}">${c.stage}</span></td>
+            <td><span class="source-badge">${c.leadSource}</span></td>
+            <td><span class="followup-date ${followUpClass}">${c.followUpDate || '-'}</span></td>
+            <td>${lastActivity}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getFollowUpClass(date) {
+      if (!date) return '';
+      const today = new Date().toISOString().split('T')[0];
+      if (date < today) return 'overdue';
+      if (date === today) return 'upcoming';
+      return '';
+    }
+
+    function openModal(clientId = null) {
+      document.getElementById('clientModal').classList.add('open');
+      document.getElementById('modalTitle').textContent = clientId ? 'Edit Client' : 'Add Client';
+      document.getElementById('deleteBtn').style.display = clientId ? 'block' : 'none';
+      document.getElementById('activityLog').style.display = clientId ? 'block' : 'none';
+      
+      if (clientId) {
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          document.getElementById('clientId').value = client.id;
+          document.getElementById('firstName').value = client.firstName;
+          document.getElementById('lastName').value = client.lastName;
+          document.getElementById('email').value = client.email;
+          document.getElementById('phone').value = client.phone;
+          document.getElementById('address').value = client.address;
+          document.getElementById('stage').value = client.stage;
+          document.getElementById('leadSource').value = client.leadSource;
+          document.getElementById('followUpDate').value = client.followUpDate || '';
+          document.getElementById('nextAction').value = client.nextAction;
+          document.getElementById('notes').value = client.notes;
+          
+          // Render activity log
+          const entries = document.getElementById('activityEntries');
+          entries.innerHTML = client.activityLog.slice().reverse().map(a => `
+            <div class="activity-entry">
+              <strong>${a.action}</strong>: ${a.details}
+              <div class="activity-time">${new Date(a.timestamp).toLocaleString()}</div>
+            </div>
+          `).join('');
+        }
+      } else {
+        document.getElementById('clientId').value = '';
+        document.getElementById('firstName').value = '';
+        document.getElementById('lastName').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('address').value = '';
+        document.getElementById('stage').value = 'lead';
+        document.getElementById('leadSource').value = 'Other';
+        document.getElementById('followUpDate').value = '';
+        document.getElementById('nextAction').value = '';
+        document.getElementById('notes').value = '';
+      }
+    }
+
+    function openClient(id) {
+      openModal(id);
+    }
+
+    function closeModal() {
+      document.getElementById('clientModal').classList.remove('open');
+    }
+
+    async function saveClient() {
+      const id = document.getElementById('clientId').value;
+      const data = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        stage: document.getElementById('stage').value,
+        leadSource: document.getElementById('leadSource').value,
+        followUpDate: document.getElementById('followUpDate').value || null,
+        nextAction: document.getElementById('nextAction').value,
+        notes: document.getElementById('notes').value
+      };
+
+      if (id) {
+        await fetch(`/api/clients/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } else {
+        await fetch('/api/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      }
+
+      closeModal();
+      loadClients();
+    }
+
+    async function deleteClient() {
+      const id = document.getElementById('clientId').value;
+      if (!id) return;
+      
+      if (confirm('Are you sure you want to delete this client?')) {
+        await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+        closeModal();
+        loadClients();
+      }
+    }
+
+    // Filter handling
+    document.querySelectorAll('.stat-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        currentFilter = card.dataset.filter;
+        renderClients();
+      });
+    });
+
+    // Search handling
+    document.getElementById('searchInput').addEventListener('input', renderClients);
+
+    // Close modal on overlay click
+    document.getElementById('clientModal').addEventListener('click', (e) => {
+      if (e.target.id === 'clientModal') closeModal();
+    });
+
+    // Initialize
+    loadClients();
+  </script>
+</body>
+</html>
