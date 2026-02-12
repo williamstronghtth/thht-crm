@@ -374,6 +374,7 @@
     <h1>THHT CRM</h1>
     <div class="header-actions">
       <input type="text" class="search-box" id="searchInput" placeholder="Search clients...">
+      <button class="btn" style="background: var(--border); color: var(--text);" onclick="openImportModal()">📥 Import CSV</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Client</button>
     </div>
   </header>
@@ -524,9 +525,44 @@
     </div>
   </div>
 
+  <!-- Import CSV Modal -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Import CSV</h2>
+        <button class="modal-close" onclick="closeImportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Select CSV File</label>
+          <input type="file" id="csvFile" accept=".csv" style="padding: 10px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); width: 100%;">
+        </div>
+        <div style="background: var(--bg); padding: 16px; border-radius: 8px; margin-top: 12px;">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;"><strong>Expected format:</strong></p>
+          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+            First Name, Last Name, Email, Home Address, Cell Phone, Last Activity, (blank), Notes<br><br>
+            <strong>Tip:</strong> Section headers (e.g., "COLD CALLING") automatically set the lead source for rows below.
+          </p>
+        </div>
+        <div id="importPreview" style="display: none; margin-top: 16px;">
+          <h3 style="font-size: 14px; margin-bottom: 12px;">Preview</h3>
+          <div id="importStats" style="background: var(--bg); padding: 12px; border-radius: 8px; font-size: 13px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div></div>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn" style="background: var(--border); color: var(--text);" onclick="closeImportModal()">Cancel</button>
+          <button class="btn btn-primary" id="importBtn" onclick="importCSV()" disabled>Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let clients = [];
     let currentFilter = 'all';
+    let parsedImportData = [];
 
     async function loadClients() {
       const res = await fetch('/api/clients');
@@ -728,6 +764,160 @@
     document.getElementById('clientModal').addEventListener('click', (e) => {
       if (e.target.id === 'clientModal') closeModal();
     });
+
+    document.getElementById('importModal').addEventListener('click', (e) => {
+      if (e.target.id === 'importModal') closeImportModal();
+    });
+
+    // CSV Import functions
+    const LEAD_SOURCES = [
+      'COLD CALLING', 'LETTER', 'SOLD.COM', 'CLOSE AI', 'OPICITY', 'OPCITY',
+      'QAZZOO', 'KVCORE', 'CB LEAD', 'DOOR KNOCKING', 'BUYERS',
+      'WEBSITE HOME EVALUATION', 'EDDM', 'RENTER', 'OPEN HOUSE', 'OTHER'
+    ];
+
+    const SOURCE_MAP = {
+      'COLD CALLING': 'Cold Calling', 'LETTER': 'Letter', 'SOLD.COM': 'Sold.com',
+      'CLOSE AI': 'Close AI', 'OPICITY': 'OPCity', 'OPCITY': 'OPCity',
+      'QAZZOO': 'Qazzoo', 'KVCORE': 'KvCORE', 'CB LEAD': 'CB Lead',
+      'DOOR KNOCKING': 'Door Knocking', 'BUYERS': 'Buyers',
+      'WEBSITE HOME EVALUATION': 'Website Home Evaluation', 'EDDM': 'EDDM',
+      'RENTER': 'Renter', 'OPEN HOUSE': 'Open House', 'OTHER': 'Other'
+    };
+
+    function openImportModal() {
+      document.getElementById('importModal').classList.add('open');
+      document.getElementById('csvFile').value = '';
+      document.getElementById('importPreview').style.display = 'none';
+      document.getElementById('importBtn').disabled = true;
+      parsedImportData = [];
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('open');
+    }
+
+    function parseCSVLine(line) {
+      const row = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          row.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      row.push(current.trim());
+      return row;
+    }
+
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const [month, day, year] = parts;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return null;
+    }
+
+    function normalizePhone(phone) {
+      if (!phone) return '';
+      return phone.replace(/\D/g, '');
+    }
+
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        const lines = content.split('\n');
+        const dataRows = lines.slice(1); // Skip header
+
+        let currentSource = 'Other';
+        parsedImportData = [];
+        const stats = { bySource: {} };
+
+        for (const line of dataRows) {
+          const row = parseCSVLine(line);
+          const firstCell = (row[0] || '').toUpperCase().trim();
+
+          // Check if this is a lead source header
+          if (LEAD_SOURCES.includes(firstCell)) {
+            currentSource = SOURCE_MAP[firstCell] || 'Other';
+            continue;
+          }
+
+          const firstName = (row[0] || '').trim();
+          const lastName = (row[1] || '').trim();
+          if (!firstName && !lastName) continue;
+
+          const email = (row[2] || '').trim();
+          const phone = normalizePhone(row[4] || '');
+          if (!email && !phone) continue;
+
+          parsedImportData.push({
+            firstName, lastName, email,
+            address: (row[3] || '').trim(),
+            phone,
+            lastActivity: parseDate(row[5]),
+            notes: (row[7] || '').trim(),
+            leadSource: currentSource,
+            stage: 'lead'
+          });
+
+          stats.bySource[currentSource] = (stats.bySource[currentSource] || 0) + 1;
+        }
+
+        // Show preview
+        const preview = document.getElementById('importPreview');
+        const statsDiv = document.getElementById('importStats');
+        preview.style.display = 'block';
+
+        let statsHtml = `<strong>${parsedImportData.length} contacts found</strong><br><br>`;
+        statsHtml += Object.entries(stats.bySource)
+          .sort((a, b) => b[1] - a[1])
+          .map(([source, count]) => `${source}: ${count}`)
+          .join('<br>');
+
+        statsDiv.innerHTML = statsHtml;
+        document.getElementById('importBtn').disabled = parsedImportData.length === 0;
+      };
+
+      reader.readAsText(file);
+    });
+
+    async function importCSV() {
+      if (parsedImportData.length === 0) return;
+
+      document.getElementById('importBtn').disabled = true;
+      document.getElementById('importBtn').textContent = 'Importing...';
+
+      try {
+        const res = await fetch('/api/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clients: parsedImportData })
+        });
+
+        const result = await res.json();
+        alert(`✅ Imported ${result.imported} contacts!\nTotal in CRM: ${result.total}`);
+        closeImportModal();
+        loadClients();
+      } catch (err) {
+        alert('❌ Import failed: ' + err.message);
+      } finally {
+        document.getElementById('importBtn').disabled = false;
+        document.getElementById('importBtn').textContent = 'Import';
+      }
+    }
 
     // Initialize
     loadClients();
