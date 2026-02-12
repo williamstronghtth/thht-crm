@@ -672,6 +672,95 @@
           <label>Notes</label>
           <textarea id="notes" placeholder="Add notes about this client..."></textarea>
         </div>
+        
+        <!-- Property Alerts Section -->
+        <div class="alerts-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 14px; font-weight: 600;">🏠 Property Alerts</h3>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="alertsEnabled" style="width: 18px; height: 18px;">
+              <span style="font-size: 13px;">Enable Alerts</span>
+            </label>
+          </div>
+          
+          <div id="alertsCriteria" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Client Type</label>
+                <select id="clientType">
+                  <option value="buyer">Buyer</option>
+                  <option value="seller">Seller</option>
+                  <option value="both">Buyer & Seller</option>
+                  <option value="investor">Investor</option>
+                  <option value="past">Past Client</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Alert Frequency</label>
+                <select id="alertFrequency">
+                  <option value="daily">Daily Digest</option>
+                  <option value="realtime">Real-time</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Locations (comma-separated)</label>
+              <input type="text" id="alertLocations" placeholder="e.g., Port Orange, New Smyrna Beach, 32127">
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>Min Price</label>
+                <input type="number" id="alertPriceMin" placeholder="e.g., 200000">
+              </div>
+              <div class="form-group">
+                <label>Max Price</label>
+                <input type="number" id="alertPriceMax" placeholder="e.g., 500000">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>Min Beds</label>
+                <input type="number" id="alertBedsMin" placeholder="e.g., 3">
+              </div>
+              <div class="form-group">
+                <label>Min Baths</label>
+                <input type="number" id="alertBathsMin" placeholder="e.g., 2">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>Property Types</label>
+                <select id="alertPropertyTypes" multiple style="height: 80px;">
+                  <option value="single-family">Single Family</option>
+                  <option value="townhouse">Townhouse</option>
+                  <option value="condo">Condo</option>
+                  <option value="multi-family">Multi-Family</option>
+                  <option value="land">Land</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Special Criteria</label>
+                <input type="number" id="alertYearBuiltMax" placeholder="Year built (max)" style="margin-bottom: 8px;">
+                <input type="number" id="alertMaxStories" placeholder="Max stories (floors)">
+              </div>
+            </div>
+            
+            <div class="form-group" id="capRateGroup" style="display: none;">
+              <label>Min Cap Rate % (for investors)</label>
+              <input type="number" id="alertMinCapRate" placeholder="e.g., 6" step="0.1">
+            </div>
+            
+            <div class="form-group">
+              <label>Custom Notes</label>
+              <input type="text" id="alertCustomNotes" placeholder="e.g., Must have pool, prefers cul-de-sac">
+            </div>
+          </div>
+        </div>
+        
         <div class="activity-log" id="activityLog" style="display: none;">
           <h3>Activity Log</h3>
           <div id="activityEntries"></div>
@@ -874,6 +963,33 @@
           document.getElementById('nextAction').value = client.nextAction;
           document.getElementById('notes').value = client.notes;
           
+          // Load alerts data
+          const alerts = client.alerts || {};
+          const criteria = alerts.criteria || {};
+          document.getElementById('alertsEnabled').checked = alerts.enabled || false;
+          document.getElementById('alertsCriteria').style.display = alerts.enabled ? 'block' : 'none';
+          document.getElementById('clientType').value = client.clientType || 'buyer';
+          document.getElementById('alertFrequency').value = alerts.frequency || 'daily';
+          document.getElementById('alertLocations').value = (criteria.locations || []).join(', ');
+          document.getElementById('alertPriceMin').value = criteria.priceMin || '';
+          document.getElementById('alertPriceMax').value = criteria.priceMax || '';
+          document.getElementById('alertBedsMin').value = criteria.bedsMin || '';
+          document.getElementById('alertBathsMin').value = criteria.bathsMin || '';
+          document.getElementById('alertYearBuiltMax').value = criteria.yearBuiltMax || '';
+          document.getElementById('alertMaxStories').value = criteria.maxStories || '';
+          document.getElementById('alertMinCapRate').value = criteria.minCapRate || '';
+          document.getElementById('alertCustomNotes').value = criteria.customNotes || '';
+          
+          // Set property types (multi-select)
+          const propTypes = document.getElementById('alertPropertyTypes');
+          Array.from(propTypes.options).forEach(opt => {
+            opt.selected = (criteria.propertyTypes || []).includes(opt.value);
+          });
+          
+          // Show cap rate for investors
+          document.getElementById('capRateGroup').style.display = 
+            client.clientType === 'investor' ? 'block' : 'none';
+          
           // Render activity log
           const entries = document.getElementById('activityEntries');
           entries.innerHTML = client.activityLog.slice().reverse().map(a => `
@@ -895,6 +1011,23 @@
         document.getElementById('followUpDate').value = '';
         document.getElementById('nextAction').value = '';
         document.getElementById('notes').value = '';
+        
+        // Reset alerts
+        document.getElementById('alertsEnabled').checked = false;
+        document.getElementById('alertsCriteria').style.display = 'none';
+        document.getElementById('clientType').value = 'buyer';
+        document.getElementById('alertFrequency').value = 'daily';
+        document.getElementById('alertLocations').value = '';
+        document.getElementById('alertPriceMin').value = '';
+        document.getElementById('alertPriceMax').value = '';
+        document.getElementById('alertBedsMin').value = '';
+        document.getElementById('alertBathsMin').value = '';
+        document.getElementById('alertYearBuiltMax').value = '';
+        document.getElementById('alertMaxStories').value = '';
+        document.getElementById('alertMinCapRate').value = '';
+        document.getElementById('alertCustomNotes').value = '';
+        Array.from(document.getElementById('alertPropertyTypes').options).forEach(opt => opt.selected = false);
+        document.getElementById('capRateGroup').style.display = 'none';
       }
     }
 
@@ -908,6 +1041,15 @@
 
     async function saveClient() {
       const id = document.getElementById('clientId').value;
+      
+      // Get selected property types
+      const propTypesSelect = document.getElementById('alertPropertyTypes');
+      const selectedPropTypes = Array.from(propTypesSelect.selectedOptions).map(opt => opt.value);
+      
+      // Parse locations
+      const locationsStr = document.getElementById('alertLocations').value;
+      const locations = locationsStr ? locationsStr.split(',').map(l => l.trim()).filter(l => l) : [];
+      
       const data = {
         firstName: document.getElementById('firstName').value,
         lastName: document.getElementById('lastName').value,
@@ -915,10 +1057,28 @@
         phone: document.getElementById('phone').value,
         address: document.getElementById('address').value,
         stage: document.getElementById('stage').value,
+        clientType: document.getElementById('clientType').value,
         leadSource: document.getElementById('leadSource').value,
         followUpDate: document.getElementById('followUpDate').value || null,
         nextAction: document.getElementById('nextAction').value,
-        notes: document.getElementById('notes').value
+        notes: document.getElementById('notes').value,
+        alerts: {
+          enabled: document.getElementById('alertsEnabled').checked,
+          method: 'email',
+          frequency: document.getElementById('alertFrequency').value,
+          criteria: {
+            locations: locations,
+            priceMin: document.getElementById('alertPriceMin').value ? parseInt(document.getElementById('alertPriceMin').value) : null,
+            priceMax: document.getElementById('alertPriceMax').value ? parseInt(document.getElementById('alertPriceMax').value) : null,
+            bedsMin: document.getElementById('alertBedsMin').value ? parseInt(document.getElementById('alertBedsMin').value) : null,
+            bathsMin: document.getElementById('alertBathsMin').value ? parseInt(document.getElementById('alertBathsMin').value) : null,
+            propertyTypes: selectedPropTypes,
+            yearBuiltMax: document.getElementById('alertYearBuiltMax').value ? parseInt(document.getElementById('alertYearBuiltMax').value) : null,
+            maxStories: document.getElementById('alertMaxStories').value ? parseInt(document.getElementById('alertMaxStories').value) : null,
+            minCapRate: document.getElementById('alertMinCapRate').value ? parseFloat(document.getElementById('alertMinCapRate').value) : null,
+            customNotes: document.getElementById('alertCustomNotes').value
+          }
+        }
       };
 
       if (id) {
@@ -1243,6 +1403,17 @@
         document.getElementById('importBtn').textContent = 'Import';
       }
     }
+
+    // Alerts toggle handler
+    document.getElementById('alertsEnabled').addEventListener('change', function() {
+      document.getElementById('alertsCriteria').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Client type change handler (show cap rate for investors)
+    document.getElementById('clientType').addEventListener('change', function() {
+      document.getElementById('capRateGroup').style.display = 
+        this.value === 'investor' ? 'block' : 'none';
+    });
 
     // Initialize
     loadClients();

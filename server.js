@@ -63,7 +63,7 @@ app.get('/api/clients', (req, res) => {
     );
   }
   
-  res.json({ clients, stages: STAGES, leadSources: LEAD_SOURCES });
+  res.json({ clients, stages: STAGES, leadSources: LEAD_SOURCES, clientTypes: CLIENT_TYPES, propertyTypes: PROPERTY_TYPES });
 });
 
 // GET single client
@@ -73,6 +73,12 @@ app.get('/api/clients/:id', (req, res) => {
   if (!client) return res.status(404).json({ error: 'Client not found' });
   res.json(client);
 });
+
+// Client types
+const CLIENT_TYPES = ['buyer', 'seller', 'both', 'investor', 'past'];
+
+// Property types for alerts
+const PROPERTY_TYPES = ['single-family', 'townhouse', 'condo', 'multi-family', 'land', 'commercial'];
 
 // POST new client
 app.post('/api/clients', (req, res) => {
@@ -85,10 +91,29 @@ app.post('/api/clients', (req, res) => {
     phone: req.body.phone || '',
     address: req.body.address || '',
     stage: req.body.stage || 'lead',
+    clientType: req.body.clientType || 'buyer',
     leadSource: req.body.leadSource || 'Other',
     followUpDate: req.body.followUpDate || null,
     nextAction: req.body.nextAction || '',
     notes: req.body.notes || '',
+    // Property Alert System fields
+    alerts: req.body.alerts || {
+      enabled: false,
+      method: 'email',
+      frequency: 'daily',
+      criteria: {
+        locations: [],
+        priceMin: null,
+        priceMax: null,
+        bedsMin: null,
+        bathsMin: null,
+        propertyTypes: [],
+        yearBuiltMax: null,
+        maxStories: null,
+        minCapRate: null,
+        customNotes: ''
+      }
+    },
     activityLog: [{
       timestamp: new Date().toISOString(),
       action: 'Created',
@@ -351,6 +376,59 @@ app.post('/api/import', (req, res) => {
   
   saveData(data);
   res.json({ imported: imported.length, total: data.clients.length });
+});
+
+// GET clients with alerts enabled (for Property Alert System)
+app.get('/api/alerts/subscribers', (req, res) => {
+  const data = loadData();
+  const subscribers = data.clients
+    .filter(c => c.alerts?.enabled)
+    .map(c => ({
+      id: c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email,
+      phone: c.phone,
+      clientType: c.clientType,
+      alerts: c.alerts
+    }));
+  
+  res.json({ 
+    subscribers,
+    count: subscribers.length
+  });
+});
+
+// PUT update client alerts
+app.put('/api/clients/:id/alerts', (req, res) => {
+  const data = loadData();
+  const idx = data.clients.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Client not found' });
+
+  const client = data.clients[idx];
+  const now = new Date().toISOString();
+  
+  // Update alerts
+  client.alerts = {
+    ...client.alerts,
+    ...req.body,
+    criteria: {
+      ...(client.alerts?.criteria || {}),
+      ...(req.body.criteria || {})
+    }
+  };
+  
+  client.updatedAt = now;
+  
+  // Log the change
+  client.activityLog.push({
+    timestamp: now,
+    action: 'Alerts Updated',
+    details: req.body.enabled ? 'Property alerts enabled' : 'Alert criteria updated'
+  });
+  
+  saveData(data);
+  res.json(client);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
