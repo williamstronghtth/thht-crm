@@ -196,23 +196,127 @@ app.get('/api/stats', (req, res) => {
     total: data.clients.length,
     byStage: {},
     bySource: {},
-    needsFollowUp: 0
+    needsFollowUp: 0,
+    overdueCount: 0,
+    todayCount: 0,
+    thisWeekCount: 0
   };
   
   STAGES.forEach(s => stats.byStage[s] = 0);
   LEAD_SOURCES.forEach(s => stats.bySource[s] = 0);
   
   const today = new Date().toISOString().split('T')[0];
+  const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
   data.clients.forEach(c => {
     stats.byStage[c.stage] = (stats.byStage[c.stage] || 0) + 1;
     stats.bySource[c.leadSource] = (stats.bySource[c.leadSource] || 0) + 1;
-    if (c.followUpDate && c.followUpDate <= today) {
-      stats.needsFollowUp++;
+    if (c.followUpDate) {
+      if (c.followUpDate < today) {
+        stats.overdueCount++;
+        stats.needsFollowUp++;
+      } else if (c.followUpDate === today) {
+        stats.todayCount++;
+        stats.needsFollowUp++;
+      } else if (c.followUpDate <= weekFromNow) {
+        stats.thisWeekCount++;
+      }
     }
   });
   
   res.json(stats);
+});
+
+// GET follow-up reminders
+app.get('/api/followups', (req, res) => {
+  const data = loadData();
+  const today = new Date().toISOString().split('T')[0];
+  const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
+  const overdue = [];
+  const dueToday = [];
+  const upcoming = [];
+  
+  data.clients.forEach(c => {
+    if (!c.followUpDate) return;
+    
+    const item = {
+      id: c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      phone: c.phone,
+      email: c.email,
+      stage: c.stage,
+      leadSource: c.leadSource,
+      followUpDate: c.followUpDate,
+      nextAction: c.nextAction,
+      lastActivity: c.lastActivity
+    };
+    
+    if (c.followUpDate < today) {
+      overdue.push(item);
+    } else if (c.followUpDate === today) {
+      dueToday.push(item);
+    } else if (c.followUpDate <= weekFromNow) {
+      upcoming.push(item);
+    }
+  });
+  
+  // Sort by date
+  overdue.sort((a, b) => a.followUpDate.localeCompare(b.followUpDate));
+  upcoming.sort((a, b) => a.followUpDate.localeCompare(b.followUpDate));
+  
+  res.json({
+    overdue,
+    dueToday,
+    upcoming,
+    summary: {
+      overdueCount: overdue.length,
+      todayCount: dueToday.length,
+      upcomingCount: upcoming.length,
+      totalNeedsAttention: overdue.length + dueToday.length
+    }
+  });
+});
+
+// POST mark client as contacted (quick action)
+app.post('/api/clients/:id/contacted', (req, res) => {
+  const data = loadData();
+  const idx = data.clients.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Client not found' });
+
+  const client = data.clients[idx];
+  const now = new Date().toISOString();
+  
+  // Log the contact
+  client.activityLog.push({
+    timestamp: now,
+    action: 'Contacted',
+    details: req.body.notes || 'Marked as contacted'
+  });
+  
+  client.lastActivity = now;
+  client.updatedAt = now;
+  
+  // Set next follow-up if provided
+  if (req.body.nextFollowUp) {
+    client.followUpDate = req.body.nextFollowUp;
+    client.activityLog.push({
+      timestamp: now,
+      action: 'Follow-up Set',
+      details: `Next follow-up: ${req.body.nextFollowUp}`
+    });
+  } else {
+    // Clear follow-up date
+    client.followUpDate = null;
+  }
+  
+  if (req.body.nextAction) {
+    client.nextAction = req.body.nextAction;
+  }
+  
+  saveData(data);
+  res.json(client);
 });
 
 // POST import clients (for CSV import)

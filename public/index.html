@@ -367,6 +367,152 @@
       font-size: 18px;
       margin-bottom: 8px;
     }
+
+    /* Follow-up Panel */
+    .followup-panel {
+      display: none;
+      padding: 24px;
+    }
+
+    .followup-panel.active {
+      display: block;
+    }
+
+    .followup-section {
+      margin-bottom: 24px;
+    }
+
+    .followup-section h3 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .followup-section h3 .count {
+      background: var(--danger);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .followup-section h3.today .count {
+      background: var(--contract);
+    }
+
+    .followup-section h3.upcoming .count {
+      background: var(--accent);
+    }
+
+    .followup-card {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--danger);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .followup-card.today {
+      border-left-color: var(--contract);
+    }
+
+    .followup-card.upcoming {
+      border-left-color: var(--accent);
+    }
+
+    .followup-info {
+      flex: 1;
+    }
+
+    .followup-name {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .followup-details {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .followup-action {
+      font-size: 12px;
+      color: var(--text);
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: var(--bg);
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .followup-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-success {
+      background: var(--closed);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    /* Quick Contact Modal */
+    .quick-modal {
+      max-width: 400px;
+    }
+
+    .snooze-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .snooze-btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .snooze-btn:hover {
+      border-color: var(--accent);
+      background: var(--surface-hover);
+    }
+
+    .snooze-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -410,7 +556,7 @@
     </div>
   </div>
 
-  <main>
+  <main id="mainTable">
     <table class="client-table">
       <thead>
         <tr>
@@ -430,6 +576,22 @@
       <p>Click "Add Client" to get started</p>
     </div>
   </main>
+
+  <!-- Follow-up Panel -->
+  <div class="followup-panel" id="followupPanel">
+    <div class="followup-section" id="overdueSection">
+      <h3>🔴 Overdue <span class="count" id="overdueCount">0</span></h3>
+      <div id="overdueList"></div>
+    </div>
+    <div class="followup-section" id="todaySection">
+      <h3 class="today">🟡 Due Today <span class="count" id="todayCount">0</span></h3>
+      <div id="todayList"></div>
+    </div>
+    <div class="followup-section" id="upcomingSection">
+      <h3 class="upcoming">🔵 This Week <span class="count" id="upcomingCount">0</span></h3>
+      <div id="upcomingList"></div>
+    </div>
+  </div>
 
   <!-- Client Modal -->
   <div class="modal-overlay" id="clientModal">
@@ -520,6 +682,47 @@
         <div style="display: flex; gap: 12px;">
           <button class="btn" style="background: var(--border); color: var(--text);" onclick="closeModal()">Cancel</button>
           <button class="btn btn-primary" onclick="saveClient()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Contact Modal -->
+  <div class="modal-overlay" id="contactModal">
+    <div class="modal quick-modal">
+      <div class="modal-header">
+        <h2>Log Contact</h2>
+        <button class="modal-close" onclick="closeContactModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="contactClientId">
+        <p id="contactClientName" style="font-weight: 600; margin-bottom: 16px;"></p>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea id="contactNotes" placeholder="What did you discuss?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Next Follow-up</label>
+          <div class="snooze-options">
+            <button class="snooze-btn" data-days="0">Done</button>
+            <button class="snooze-btn" data-days="1">Tomorrow</button>
+            <button class="snooze-btn" data-days="3">3 Days</button>
+            <button class="snooze-btn" data-days="7">1 Week</button>
+            <button class="snooze-btn" data-days="14">2 Weeks</button>
+            <button class="snooze-btn" data-days="30">1 Month</button>
+          </div>
+          <input type="date" id="contactNextDate" style="margin-top: 10px;">
+        </div>
+        <div class="form-group">
+          <label>Next Action</label>
+          <input type="text" id="contactNextAction" placeholder="e.g., Send proposal, Schedule showing...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div></div>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn" style="background: var(--border); color: var(--text);" onclick="closeContactModal()">Cancel</button>
+          <button class="btn btn-success" onclick="saveContact()">✓ Mark Contacted</button>
         </div>
       </div>
     </div>
@@ -747,13 +950,135 @@
       }
     }
 
+    // Follow-up panel functions
+    async function loadFollowups() {
+      const res = await fetch('/api/followups');
+      const data = await res.json();
+      
+      document.getElementById('overdueCount').textContent = data.overdue.length;
+      document.getElementById('todayCount').textContent = data.dueToday.length;
+      document.getElementById('upcomingCount').textContent = data.upcoming.length;
+      
+      document.getElementById('overdueList').innerHTML = data.overdue.map(c => renderFollowupCard(c, 'overdue')).join('');
+      document.getElementById('todayList').innerHTML = data.dueToday.map(c => renderFollowupCard(c, 'today')).join('');
+      document.getElementById('upcomingList').innerHTML = data.upcoming.map(c => renderFollowupCard(c, 'upcoming')).join('');
+      
+      // Hide empty sections
+      document.getElementById('overdueSection').style.display = data.overdue.length ? 'block' : 'none';
+      document.getElementById('todaySection').style.display = data.dueToday.length ? 'block' : 'none';
+      document.getElementById('upcomingSection').style.display = data.upcoming.length ? 'block' : 'none';
+    }
+
+    function renderFollowupCard(client, type) {
+      const daysAgo = type === 'overdue' ? getDaysOverdue(client.followUpDate) : '';
+      return `
+        <div class="followup-card ${type}">
+          <div class="followup-info">
+            <div class="followup-name">${client.firstName} ${client.lastName}</div>
+            <div class="followup-details">
+              <span>📞 ${client.phone || 'No phone'}</span>
+              <span>📍 ${client.leadSource}</span>
+              <span>📅 ${client.followUpDate}${daysAgo ? ` (${daysAgo} overdue)` : ''}</span>
+            </div>
+            ${client.nextAction ? `<div class="followup-action">→ ${client.nextAction}</div>` : ''}
+          </div>
+          <div class="followup-actions">
+            <button class="btn-small btn-success" onclick="openContactModal('${client.id}', '${client.firstName} ${client.lastName}')">✓ Contacted</button>
+            <button class="btn-small" style="background: var(--border); color: var(--text);" onclick="openClient('${client.id}')">View</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function getDaysOverdue(date) {
+      const diff = Math.floor((new Date() - new Date(date)) / (1000 * 60 * 60 * 24));
+      if (diff === 1) return '1 day';
+      return `${diff} days`;
+    }
+
+    function showFollowupPanel() {
+      document.getElementById('mainTable').style.display = 'none';
+      document.getElementById('followupPanel').classList.add('active');
+      loadFollowups();
+    }
+
+    function hideFollowupPanel() {
+      document.getElementById('mainTable').style.display = 'block';
+      document.getElementById('followupPanel').classList.remove('active');
+    }
+
+    // Quick contact modal
+    let selectedSnooze = null;
+
+    function openContactModal(clientId, clientName) {
+      document.getElementById('contactModal').classList.add('open');
+      document.getElementById('contactClientId').value = clientId;
+      document.getElementById('contactClientName').textContent = clientName;
+      document.getElementById('contactNotes').value = '';
+      document.getElementById('contactNextDate').value = '';
+      document.getElementById('contactNextAction').value = '';
+      selectedSnooze = null;
+      document.querySelectorAll('.snooze-btn').forEach(b => b.classList.remove('selected'));
+    }
+
+    function closeContactModal() {
+      document.getElementById('contactModal').classList.remove('open');
+    }
+
+    document.querySelectorAll('.snooze-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.snooze-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedSnooze = parseInt(btn.dataset.days);
+        
+        if (selectedSnooze === 0) {
+          document.getElementById('contactNextDate').value = '';
+        } else {
+          const nextDate = new Date(Date.now() + selectedSnooze * 24 * 60 * 60 * 1000);
+          document.getElementById('contactNextDate').value = nextDate.toISOString().split('T')[0];
+        }
+      });
+    });
+
+    async function saveContact() {
+      const clientId = document.getElementById('contactClientId').value;
+      const notes = document.getElementById('contactNotes').value;
+      const nextDate = document.getElementById('contactNextDate').value;
+      const nextAction = document.getElementById('contactNextAction').value;
+
+      await fetch(`/api/clients/${clientId}/contacted`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: notes || 'Contacted',
+          nextFollowUp: nextDate || null,
+          nextAction
+        })
+      });
+
+      closeContactModal();
+      loadClients();
+      loadFollowups();
+      loadStats();
+    }
+
+    document.getElementById('contactModal').addEventListener('click', (e) => {
+      if (e.target.id === 'contactModal') closeContactModal();
+    });
+
     // Filter handling
     document.querySelectorAll('.stat-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         currentFilter = card.dataset.filter;
-        renderClients();
+        
+        if (currentFilter === 'followup') {
+          showFollowupPanel();
+        } else {
+          hideFollowupPanel();
+          renderClients();
+        }
       });
     });
 
