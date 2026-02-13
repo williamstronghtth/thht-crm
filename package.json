@@ -1,15 +1,21 @@
 {
   "name": "thht-crm",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "THHT Client Relationship Manager with Property Alerts",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "scrape": "node scripts/rpr-scraper.js",
+    "match": "node scripts/matching-engine.js",
+    "alerts": "node scripts/property-alerts.js",
+    "alerts:notify": "node scripts/property-alerts.js --notify",
+    "add-test-buyers": "node scripts/add-test-buyers.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["crm", "real-estate", "property-alerts"],
+  "author": "The Hoover Home Team",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "playwright": "^1.41.0"
   }
 }
