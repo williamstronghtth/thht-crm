@@ -129,6 +129,20 @@ function matchesCriteria(listing, criteria) {
     misses.push(`${listing.stories} stories exceeds max ${criteria.maxStories}`);
   }
 
+  // Sqft check
+  if (criteria.sqftMin && listing.sqft && listing.sqft < criteria.sqftMin) {
+    misses.push(`${listing.sqft} sqft below min ${criteria.sqftMin}`);
+  }
+  if (listing.sqft && (!criteria.sqftMin || listing.sqft >= criteria.sqftMin)) {
+    reasons.push(`${listing.sqft.toLocaleString()} sqft`);
+  }
+
+  // Waterfront check
+  if (criteria.waterfront) {
+    // Flag for manual review - waterfront info may not be in listing data
+    reasons.push(`⚠️ Waterfront required - verify manually (pond/lake)`);
+  }
+
   // Investment property flag (for cap rate buyers like Scott)
   // Since we can't calculate actual cap rate, flag properties under investment threshold
   if (criteria.minCapRate && listing.price) {

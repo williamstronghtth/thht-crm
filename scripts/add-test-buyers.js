@@ -25,6 +25,47 @@ function saveData(data) {
 
 const testBuyers = [
   {
+    id: 'buyer-nick',
+    firstName: 'Nick',
+    lastName: '',
+    email: 'Mrngny@aol.com',
+    phone: '+1 (914) 391-2589',
+    address: 'New York (winters in Daytona Beach)',
+    stage: 'active',
+    clientType: 'buyer',
+    leadSource: 'Other',
+    followUpDate: null,
+    nextAction: 'Property search active - waterfront homes',
+    notes: 'From New York, winters in Daytona Beach. Looking for waterfront property (pond or lake). Chris notes: prefers one-style flooring throughout, high ceilings or tray ceilings.',
+    alerts: {
+      enabled: true,
+      method: 'email',
+      frequency: 'daily',
+      criteria: {
+        locations: ['Port Orange', 'Ormond Beach', 'New Smyrna Beach', 'NSB'],
+        priceMin: null,
+        priceMax: 900000,
+        bedsMin: null,
+        bathsMin: null,
+        propertyTypes: ['single-family'],
+        yearBuiltMax: null,
+        maxStories: null,
+        minCapRate: null,
+        sqftMin: 3000,
+        waterfront: true,
+        customNotes: 'MUST HAVE: Waterfront (pond or lake). PREFERENCES: One-style flooring throughout, high/tray ceilings.'
+      }
+    },
+    activityLog: [{
+      timestamp: new Date().toISOString(),
+      action: 'Created',
+      details: 'Buyer added for Property Alert System'
+    }],
+    lastActivity: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
     id: 'buyer-suzanne-allen',
     firstName: 'Suzanne',
     lastName: 'Allen',
