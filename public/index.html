@@ -765,6 +765,17 @@
           <h3>Activity Log</h3>
           <div id="activityEntries"></div>
         </div>
+        
+        <!-- Call History Section -->
+        <div class="activity-log" id="callHistory" style="display: none;">
+          <h3 style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📞 Call History</span>
+            <a href="#" id="clickToCallLink" class="btn btn-primary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
+              Call Now
+            </a>
+          </h3>
+          <div id="callEntries" style="margin-top: 12px;"></div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteClient()">Delete</button>
@@ -924,7 +935,7 @@
               <div class="client-name">${c.firstName} ${c.lastName}</div>
               <div class="client-email">${c.email || '-'}</div>
             </td>
-            <td>${c.phone || '-'}</td>
+            <td>${c.phone ? `<a href="tel:${c.phone}" style="color: var(--accent); text-decoration: none;">${c.phone}</a>` : '-'}</td>
             <td><span class="stage-badge ${c.stage}">${c.stage}</span></td>
             <td><span class="source-badge">${c.leadSource}</span></td>
             <td><span class="followup-date ${followUpClass}">${c.followUpDate || '-'}</span></td>
@@ -998,8 +1009,13 @@
               <div class="activity-time">${new Date(a.timestamp).toLocaleString()}</div>
             </div>
           `).join('');
+          
+          // Load and display call history
+          loadClientCalls(client.id, client.phone);
         }
       } else {
+        // Hide call history for new clients
+        document.getElementById('callHistory').style.display = 'none';
         document.getElementById('clientId').value = '';
         document.getElementById('firstName').value = '';
         document.getElementById('lastName').value = '';
@@ -1136,7 +1152,7 @@
           <div class="followup-info">
             <div class="followup-name">${client.firstName} ${client.lastName}</div>
             <div class="followup-details">
-              <span>📞 ${client.phone || 'No phone'}</span>
+              <span>${client.phone ? `<a href="tel:${client.phone}" style="color: var(--accent); text-decoration: none;">📞 ${client.phone}</a>` : '📞 No phone'}</span>
               <span>📍 ${client.leadSource}</span>
               <span>📅 ${client.followUpDate}${daysAgo ? ` (${daysAgo} overdue)` : ''}</span>
             </div>
@@ -1414,6 +1430,57 @@
       document.getElementById('capRateGroup').style.display = 
         this.value === 'investor' ? 'block' : 'none';
     });
+
+    // ========================================
+    // OpenPhone Call History
+    // ========================================
+    async function loadClientCalls(clientId, phone) {
+      const callHistory = document.getElementById('callHistory');
+      const callEntries = document.getElementById('callEntries');
+      const clickToCallLink = document.getElementById('clickToCallLink');
+      
+      // Show call history section
+      callHistory.style.display = 'block';
+      
+      // Set click-to-call link
+      if (phone) {
+        clickToCallLink.href = `tel:${phone}`;
+        clickToCallLink.style.display = 'inline-block';
+      } else {
+        clickToCallLink.style.display = 'none';
+      }
+      
+      // Fetch call history
+      try {
+        const res = await fetch(`/api/clients/${clientId}/calls`);
+        const data = await res.json();
+        
+        if (data.calls && data.calls.length > 0) {
+          callEntries.innerHTML = data.calls.slice(0, 10).map(call => {
+            const icon = call.type?.includes('call') 
+              ? (call.direction === 'inbound' ? '📲' : '📞')
+              : (call.direction === 'inbound' ? '📨' : '📤');
+            const action = call.type?.includes('call')
+              ? (call.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call')
+              : (call.direction === 'inbound' ? 'SMS Received' : 'SMS Sent');
+            const details = call.duration 
+              ? `Duration: ${call.duration}s` 
+              : (call.body ? call.body.substring(0, 50) + '...' : '');
+            
+            return `
+              <div class="activity-entry">
+                <strong>${icon} ${action}</strong>: ${details}
+                <div class="activity-time">${new Date(call.timestamp).toLocaleString()}</div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          callEntries.innerHTML = '<div style="color: var(--text-muted); font-size: 14px;">No call history yet. Calls made via OpenPhone will appear here.</div>';
+        }
+      } catch (err) {
+        callEntries.innerHTML = '<div style="color: var(--text-muted); font-size: 14px;">Call history unavailable. Configure OpenPhone webhook to enable.</div>';
+      }
+    }
 
     // Initialize
     loadClients();

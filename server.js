@@ -431,6 +431,238 @@ app.put('/api/clients/:id/alerts', (req, res) => {
   res.json(client);
 });
 
+// ========================================
+// OpenPhone Integration
+// ========================================
+const openphone = require('./services/openphone');
+
+// Store call logs (will be synced to client records)
+const CALLS_FILE = path.join(__dirname, 'calls.json');
+
+function loadCalls() {
+  if (!fs.existsSync(CALLS_FILE)) {
+    fs.writeFileSync(CALLS_FILE, JSON.stringify({ calls: [] }, null, 2));
+    return { calls: [] };
+  }
+  return JSON.parse(fs.readFileSync(CALLS_FILE, 'utf8'));
+}
+
+function saveCalls(data) {
+  fs.writeFileSync(CALLS_FILE, JSON.stringify(data, null, 2));
+}
+
+// Webhook endpoint for OpenPhone events
+app.post('/api/openphone/webhook', (req, res) => {
+  console.log('OpenPhone webhook received:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const event = openphone.processWebhookEvent(req.body);
+    const callsData = loadCalls();
+    const clientsData = loadData();
+    
+    // Find matching client by phone number
+    const phoneNormalized = openphone.normalizePhone(event.phoneNumber);
+    const matchingClient = clientsData.clients.find(c => 
+      openphone.normalizePhone(c.phone) === phoneNormalized
+    );
+    
+    // Create call/message log entry
+    const logEntry = {
+      id: event.callId || event.messageId || Date.now().toString(),
+      type: event.type,
+      direction: event.direction,
+      phoneNumber: event.phoneNumber,
+      from: event.from,
+      to: event.to,
+      duration: event.duration,
+      status: event.status,
+      body: event.body,
+      clientId: matchingClient?.id || null,
+      clientName: matchingClient ? `${matchingClient.firstName} ${matchingClient.lastName}` : null,
+      timestamp: event.timestamp,
+      raw: event.raw
+    };
+    
+    // Store the call log
+    callsData.calls.unshift(logEntry);
+    // Keep last 1000 calls
+    if (callsData.calls.length > 1000) {
+      callsData.calls = callsData.calls.slice(0, 1000);
+    }
+    saveCalls(callsData);
+    
+    // If we found a matching client, add to their activity log
+    if (matchingClient) {
+      const idx = clientsData.clients.findIndex(c => c.id === matchingClient.id);
+      if (idx !== -1) {
+        const action = event.type.includes('call') 
+          ? (event.direction === 'inbound' ? 'Incoming Call' : 'Outgoing Call')
+          : (event.direction === 'inbound' ? 'SMS Received' : 'SMS Sent');
+        
+        const details = event.type.includes('call')
+          ? `Duration: ${event.duration || 0}s | Status: ${event.status || 'completed'}`
+          : `Message: ${(event.body || '').substring(0, 100)}`;
+        
+        clientsData.clients[idx].activityLog.push({
+          timestamp: event.timestamp,
+          action,
+          details,
+          callId: event.callId,
+          messageId: event.messageId
+        });
+        clientsData.clients[idx].lastActivity = event.timestamp;
+        saveData(clientsData);
+      }
+    }
+    
+    res.json({ success: true, logged: true, clientMatched: !!matchingClient });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all call logs
+app.get('/api/calls', (req, res) => {
+  const callsData = loadCalls();
+  let calls = callsData.calls;
+  
+  // Filter by client ID
+  if (req.query.clientId) {
+    calls = calls.filter(c => c.clientId === req.query.clientId);
+  }
+  
+  // Filter by phone number
+  if (req.query.phone) {
+    const phoneNorm = openphone.normalizePhone(req.query.phone);
+    calls = calls.filter(c => openphone.normalizePhone(c.phoneNumber) === phoneNorm);
+  }
+  
+  // Filter by type
+  if (req.query.type) {
+    calls = calls.filter(c => c.type.includes(req.query.type));
+  }
+  
+  // Limit results
+  const limit = parseInt(req.query.limit) || 50;
+  calls = calls.slice(0, limit);
+  
+  res.json({ calls, total: callsData.calls.length });
+});
+
+// GET call details (recordings, transcription, summary)
+app.get('/api/calls/:callId', async (req, res) => {
+  try {
+    const [call, recordings, transcription, summary] = await Promise.all([
+      openphone.getCall(req.params.callId).catch(() => null),
+      openphone.getCallRecordings(req.params.callId).catch(() => null),
+      openphone.getCallTranscription(req.params.callId).catch(() => null),
+      openphone.getCallSummary(req.params.callId).catch(() => null)
+    ]);
+    
+    res.json({ call, recordings, transcription, summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET calls for a specific client
+app.get('/api/clients/:id/calls', (req, res) => {
+  const data = loadData();
+  const client = data.clients.find(c => c.id === req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  
+  const callsData = loadCalls();
+  const phoneNorm = openphone.normalizePhone(client.phone);
+  
+  const clientCalls = callsData.calls.filter(c => 
+    c.clientId === client.id || 
+    openphone.normalizePhone(c.phoneNumber) === phoneNorm
+  );
+  
+  res.json({ 
+    calls: clientCalls,
+    clickToCall: openphone.getClickToCallUrl(client.phone),
+    openPhoneLink: openphone.getOpenPhoneDeepLink(client.phone)
+  });
+});
+
+// POST sync client to OpenPhone contacts
+app.post('/api/clients/:id/sync-openphone', async (req, res) => {
+  const data = loadData();
+  const client = data.clients.find(c => c.id === req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  
+  try {
+    const contact = await openphone.createContact({
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      phone: client.phone
+    });
+    
+    // Store OpenPhone contact ID on client record
+    const idx = data.clients.findIndex(c => c.id === req.params.id);
+    data.clients[idx].openPhoneContactId = contact.data?.id;
+    data.clients[idx].activityLog.push({
+      timestamp: new Date().toISOString(),
+      action: 'OpenPhone Sync',
+      details: 'Contact synced to OpenPhone'
+    });
+    saveData(data);
+    
+    res.json({ success: true, contact: contact.data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST sync all clients to OpenPhone
+app.post('/api/openphone/sync-all', async (req, res) => {
+  const data = loadData();
+  const results = { synced: 0, failed: 0, errors: [] };
+  
+  for (const client of data.clients) {
+    if (!client.phone) continue;
+    
+    try {
+      await openphone.createContact({
+        firstName: client.firstName,
+        lastName: client.lastName,
+        email: client.email,
+        phone: client.phone
+      });
+      results.synced++;
+    } catch (err) {
+      results.failed++;
+      results.errors.push({ clientId: client.id, error: err.message });
+    }
+    
+    // Rate limit - wait 200ms between requests
+    await new Promise(r => setTimeout(r, 200));
+  }
+  
+  res.json(results);
+});
+
+// GET OpenPhone status/health check
+app.get('/api/openphone/status', async (req, res) => {
+  try {
+    const webhooks = await openphone.listWebhooks().catch(() => ({ data: [] }));
+    res.json({
+      configured: !!process.env.OPENPHONE_API_KEY,
+      phoneNumber: openphone.OPENPHONE_NUMBER,
+      webhooksConfigured: webhooks.data?.length || 0
+    });
+  } catch (err) {
+    res.json({
+      configured: !!process.env.OPENPHONE_API_KEY,
+      error: err.message
+    });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`THHT CRM running on port ${PORT}`);
+  console.log(`OpenPhone integration: ${process.env.OPENPHONE_API_KEY ? 'ENABLED' : 'NOT CONFIGURED'}`);
 });
