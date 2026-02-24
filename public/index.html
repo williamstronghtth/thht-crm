@@ -25,6 +25,16 @@
       --closed: #22c55e;
       --past: #64748b;
       --danger: #ef4444;
+      --warm: #f97316;
+      --cold: #6366f1;
+      --divorce: #ec4899;
+      --probate: #8b5cf6;
+      --pre-foreclosure: #ef4444;
+      --expired: #84cc16;
+      --fsbo: #14b8a6;
+      --investor-type: #eab308;
+      --referral: #22c55e;
+      --sphere: #3b82f6;
     }
 
     body {
@@ -198,6 +208,27 @@
       font-size: 12px;
       color: var(--text-muted);
     }
+
+    .lead-type-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .lead-type-badge.warm { background: rgba(249, 115, 22, 0.2); color: var(--warm); }
+    .lead-type-badge.cold { background: rgba(99, 102, 241, 0.2); color: var(--cold); }
+    .lead-type-badge.divorce { background: rgba(236, 72, 153, 0.2); color: var(--divorce); }
+    .lead-type-badge.probate { background: rgba(139, 92, 246, 0.2); color: var(--probate); }
+    .lead-type-badge.pre-foreclosure { background: rgba(239, 68, 68, 0.2); color: var(--pre-foreclosure); }
+    .lead-type-badge.expired { background: rgba(132, 204, 22, 0.2); color: var(--expired); }
+    .lead-type-badge.fsbo { background: rgba(20, 184, 166, 0.2); color: var(--fsbo); }
+    .lead-type-badge.investor { background: rgba(234, 179, 8, 0.2); color: var(--investor-type); }
+    .lead-type-badge.referral { background: rgba(34, 197, 94, 0.2); color: var(--referral); }
+    .lead-type-badge.sphere { background: rgba(59, 130, 246, 0.2); color: var(--sphere); }
+    .lead-type-badge.other { background: rgba(100, 116, 139, 0.2); color: var(--past); }
 
     .followup-date {
       font-size: 13px;
@@ -519,6 +550,20 @@
   <header>
     <h1>THHT CRM</h1>
     <div class="header-actions">
+      <select id="leadTypeFilter" class="search-box" style="width: 140px; cursor: pointer;">
+        <option value="">All Types</option>
+        <option value="warm">🔥 Warm</option>
+        <option value="cold">❄️ Cold</option>
+        <option value="divorce">💔 Divorce</option>
+        <option value="probate">📜 Probate</option>
+        <option value="pre-foreclosure">🏚️ Pre-Foreclosure</option>
+        <option value="expired">⏰ Expired</option>
+        <option value="fsbo">🏠 FSBO</option>
+        <option value="investor">💰 Investor</option>
+        <option value="referral">🤝 Referral</option>
+        <option value="sphere">🌐 Sphere</option>
+        <option value="other">📋 Other</option>
+      </select>
       <input type="text" class="search-box" id="searchInput" placeholder="Search clients...">
       <button class="btn" style="background: var(--border); color: var(--text);" onclick="openImportModal()">📥 Import CSV</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Client</button>
@@ -562,6 +607,7 @@
         <tr>
           <th>Name</th>
           <th>Phone</th>
+          <th>Type</th>
           <th>Stage</th>
           <th>Source</th>
           <th>Follow-Up</th>
@@ -638,25 +684,41 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Lead Source</label>
-            <select id="leadSource">
-              <option value="Cold Calling">Cold Calling</option>
-              <option value="Letter">Letter</option>
-              <option value="Sold.com">Sold.com</option>
-              <option value="Close AI">Close AI</option>
-              <option value="OPCity">OPCity</option>
-              <option value="Qazzoo">Qazzoo</option>
-              <option value="KvCORE">KvCORE</option>
-              <option value="CB Lead">CB Lead</option>
-              <option value="Door Knocking">Door Knocking</option>
-              <option value="Buyers">Buyers</option>
-              <option value="Website Home Evaluation">Website Home Evaluation</option>
-              <option value="EDDM">EDDM</option>
-              <option value="Renter">Renter</option>
-              <option value="Open House">Open House</option>
-              <option value="Other">Other</option>
+            <label>Lead Type</label>
+            <select id="leadType">
+              <option value="warm">🔥 Warm</option>
+              <option value="cold">❄️ Cold</option>
+              <option value="divorce">💔 Divorce</option>
+              <option value="probate">📜 Probate</option>
+              <option value="pre-foreclosure">🏚️ Pre-Foreclosure</option>
+              <option value="expired">⏰ Expired</option>
+              <option value="fsbo">🏠 FSBO</option>
+              <option value="investor">💰 Investor</option>
+              <option value="referral">🤝 Referral</option>
+              <option value="sphere">🌐 Sphere</option>
+              <option value="other">📋 Other</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Lead Source</label>
+          <select id="leadSource">
+            <option value="Cold Calling">Cold Calling</option>
+            <option value="Letter">Letter</option>
+            <option value="Sold.com">Sold.com</option>
+            <option value="Close AI">Close AI</option>
+            <option value="OPCity">OPCity</option>
+            <option value="Qazzoo">Qazzoo</option>
+            <option value="KvCORE">KvCORE</option>
+            <option value="CB Lead">CB Lead</option>
+            <option value="Door Knocking">Door Knocking</option>
+            <option value="Buyers">Buyers</option>
+            <option value="Website Home Evaluation">Website Home Evaluation</option>
+            <option value="EDDM">EDDM</option>
+            <option value="Renter">Renter</option>
+            <option value="Open House">Open House</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -891,6 +953,7 @@
     function renderClients() {
       const tbody = document.getElementById('clientList');
       const search = document.getElementById('searchInput').value.toLowerCase();
+      const leadTypeFilter = document.getElementById('leadTypeFilter').value;
       
       let filtered = clients;
       
@@ -903,6 +966,11 @@
       if (currentFilter === 'followup') {
         const today = new Date().toISOString().split('T')[0];
         filtered = filtered.filter(c => c.followUpDate && c.followUpDate <= today);
+      }
+      
+      // Apply lead type filter
+      if (leadTypeFilter) {
+        filtered = filtered.filter(c => (c.leadType || 'cold') === leadTypeFilter);
       }
       
       // Apply search
@@ -928,6 +996,8 @@
       tbody.innerHTML = filtered.map(c => {
         const followUpClass = getFollowUpClass(c.followUpDate);
         const lastActivity = c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : '-';
+        const leadType = c.leadType || 'cold';
+        const leadTypeLabel = leadType.replace('-', ' ');
         
         return `
           <tr onclick="openClient('${c.id}')">
@@ -936,6 +1006,7 @@
               <div class="client-email">${c.email || '-'}</div>
             </td>
             <td>${c.phone ? `<a href="tel:${c.phone}" style="color: var(--accent); text-decoration: none;">${c.phone}</a>` : '-'}</td>
+            <td><span class="lead-type-badge ${leadType}">${leadTypeLabel}</span></td>
             <td><span class="stage-badge ${c.stage}">${c.stage}</span></td>
             <td><span class="source-badge">${c.leadSource}</span></td>
             <td><span class="followup-date ${followUpClass}">${c.followUpDate || '-'}</span></td>
@@ -969,6 +1040,7 @@
           document.getElementById('phone').value = client.phone;
           document.getElementById('address').value = client.address;
           document.getElementById('stage').value = client.stage;
+          document.getElementById('leadType').value = client.leadType || 'cold';
           document.getElementById('leadSource').value = client.leadSource;
           document.getElementById('followUpDate').value = client.followUpDate || '';
           document.getElementById('nextAction').value = client.nextAction;
@@ -1027,6 +1099,7 @@
         document.getElementById('followUpDate').value = '';
         document.getElementById('nextAction').value = '';
         document.getElementById('notes').value = '';
+        document.getElementById('leadType').value = 'cold';
         
         // Reset alerts
         document.getElementById('alertsEnabled').checked = false;
@@ -1073,6 +1146,7 @@
         phone: document.getElementById('phone').value,
         address: document.getElementById('address').value,
         stage: document.getElementById('stage').value,
+        leadType: document.getElementById('leadType').value,
         clientType: document.getElementById('clientType').value,
         leadSource: document.getElementById('leadSource').value,
         followUpDate: document.getElementById('followUpDate').value || null,
@@ -1260,6 +1334,9 @@
 
     // Search handling
     document.getElementById('searchInput').addEventListener('input', renderClients);
+    
+    // Lead type filter handling
+    document.getElementById('leadTypeFilter').addEventListener('change', renderClients);
 
     // Close modal on overlay click
     document.getElementById('clientModal').addEventListener('click', (e) => {

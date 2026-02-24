@@ -19,6 +19,21 @@ const LEAD_SOURCES = [
   'Website Home Evaluation', 'EDDM', 'Renter', 'Open House', 'Other'
 ];
 
+// Lead types for categorizing leads
+const LEAD_TYPES = [
+  'warm',       // Warm leads - engaged, showing interest
+  'cold',       // Cold leads - new, not yet contacted
+  'divorce',    // Divorce leads - property from divorce proceedings
+  'probate',    // Probate leads - inherited property
+  'pre-foreclosure', // Pre-foreclosure leads
+  'expired',    // Expired listings
+  'fsbo',       // For Sale By Owner
+  'investor',   // Investment property leads
+  'referral',   // Referral from past clients
+  'sphere',     // Sphere of influence
+  'other'       // Uncategorized
+];
+
 // Initialize data file if it doesn't exist
 function loadData() {
   if (!fs.existsSync(DATA_FILE)) {
@@ -52,6 +67,11 @@ app.get('/api/clients', (req, res) => {
     clients = clients.filter(c => c.leadSource === req.query.source);
   }
   
+  // Filter by lead type if provided
+  if (req.query.leadType) {
+    clients = clients.filter(c => c.leadType === req.query.leadType);
+  }
+  
   // Search by name/email/phone
   if (req.query.search) {
     const s = req.query.search.toLowerCase();
@@ -63,7 +83,7 @@ app.get('/api/clients', (req, res) => {
     );
   }
   
-  res.json({ clients, stages: STAGES, leadSources: LEAD_SOURCES, clientTypes: CLIENT_TYPES, propertyTypes: PROPERTY_TYPES });
+  res.json({ clients, stages: STAGES, leadSources: LEAD_SOURCES, leadTypes: LEAD_TYPES, clientTypes: CLIENT_TYPES, propertyTypes: PROPERTY_TYPES });
 });
 
 // GET single client
@@ -92,6 +112,7 @@ app.post('/api/clients', (req, res) => {
     address: req.body.address || '',
     stage: req.body.stage || 'lead',
     clientType: req.body.clientType || 'buyer',
+    leadType: req.body.leadType || 'cold',
     leadSource: req.body.leadSource || 'Other',
     followUpDate: req.body.followUpDate || null,
     nextAction: req.body.nextAction || '',
@@ -214,6 +235,46 @@ app.delete('/api/clients/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// PATCH bulk update lead type for multiple clients
+app.patch('/api/clients/bulk/leadType', (req, res) => {
+  const data = loadData();
+  const { clientIds, leadType } = req.body;
+  
+  if (!clientIds || !Array.isArray(clientIds)) {
+    return res.status(400).json({ error: 'clientIds array required' });
+  }
+  
+  if (!leadType || !LEAD_TYPES.includes(leadType)) {
+    return res.status(400).json({ error: 'Valid leadType required', validTypes: LEAD_TYPES });
+  }
+  
+  let updated = 0;
+  const now = new Date().toISOString();
+  
+  clientIds.forEach(id => {
+    const idx = data.clients.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      const oldType = data.clients[idx].leadType || 'cold';
+      data.clients[idx].leadType = leadType;
+      data.clients[idx].updatedAt = now;
+      data.clients[idx].activityLog.push({
+        timestamp: now,
+        action: 'Lead Type Changed',
+        details: `${oldType} → ${leadType}`
+      });
+      updated++;
+    }
+  });
+  
+  saveData(data);
+  res.json({ updated, total: clientIds.length });
+});
+
+// GET lead types list
+app.get('/api/leadTypes', (req, res) => {
+  res.json({ leadTypes: LEAD_TYPES });
+});
+
 // GET dashboard stats
 app.get('/api/stats', (req, res) => {
   const data = loadData();
@@ -221,6 +282,7 @@ app.get('/api/stats', (req, res) => {
     total: data.clients.length,
     byStage: {},
     bySource: {},
+    byLeadType: {},
     needsFollowUp: 0,
     overdueCount: 0,
     todayCount: 0,
@@ -229,6 +291,7 @@ app.get('/api/stats', (req, res) => {
   
   STAGES.forEach(s => stats.byStage[s] = 0);
   LEAD_SOURCES.forEach(s => stats.bySource[s] = 0);
+  LEAD_TYPES.forEach(t => stats.byLeadType[t] = 0);
   
   const today = new Date().toISOString().split('T')[0];
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -236,6 +299,7 @@ app.get('/api/stats', (req, res) => {
   data.clients.forEach(c => {
     stats.byStage[c.stage] = (stats.byStage[c.stage] || 0) + 1;
     stats.bySource[c.leadSource] = (stats.bySource[c.leadSource] || 0) + 1;
+    stats.byLeadType[c.leadType || 'cold'] = (stats.byLeadType[c.leadType || 'cold'] || 0) + 1;
     if (c.followUpDate) {
       if (c.followUpDate < today) {
         stats.overdueCount++;
@@ -358,6 +422,7 @@ app.post('/api/import', (req, res) => {
       phone: c.phone || '',
       address: c.address || '',
       stage: c.stage || 'lead',
+      leadType: c.leadType || 'cold',
       leadSource: c.leadSource || 'Other',
       followUpDate: c.followUpDate || null,
       nextAction: c.nextAction || '',
@@ -365,7 +430,7 @@ app.post('/api/import', (req, res) => {
       activityLog: [{
         timestamp: new Date().toISOString(),
         action: 'Imported',
-        details: `Imported from CSV (Source: ${c.leadSource || 'Unknown'})`
+        details: `Imported from CSV (Source: ${c.leadSource || 'Unknown'}, Type: ${c.leadType || 'cold'})`
       }],
       lastActivity: c.lastActivity || new Date().toISOString(),
       createdAt: new Date().toISOString(),
