@@ -465,14 +465,29 @@ app.get('/api/openphone/status', async (req, res) => {
 app.get('/api/status', async (req, res) => {
   try {
     const stats = await db.getStats();
+    const cacheStatus = db.getCacheStatus();
     res.json({
       database: db.USE_SUPABASE ? 'supabase' : 'local-json',
       persistent: db.USE_SUPABASE,
       totalClients: stats.total,
-      openphone: !!process.env.OPENPHONE_API_KEY
+      openphone: !!process.env.OPENPHONE_API_KEY,
+      cache: cacheStatus,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Even if stats fail, try to return cache status
+    try {
+      const cacheStatus = db.getCacheStatus();
+      res.status(200).json({
+        database: db.USE_SUPABASE ? 'supabase' : 'local-json',
+        persistent: db.USE_SUPABASE,
+        readOnly: cacheStatus.readOnly,
+        totalClients: cacheStatus.cachedClients || 0,
+        cache: cacheStatus,
+        error: 'Supabase unreachable — serving from cache',
+      });
+    } catch (e) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 

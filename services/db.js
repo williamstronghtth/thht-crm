@@ -1,10 +1,12 @@
 /**
  * Database Abstraction Layer
- * Uses Supabase when configured, falls back to local JSON
+ * Uses Supabase when configured, falls back to local JSON.
+ * Includes cache layer for graceful degradation when Supabase is unreachable.
  */
 
 const fs = require('fs');
 const path = require('path');
+const cache = require('./cache');
 
 // Check for Supabase configuration
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -15,7 +17,7 @@ let supabase = null;
 if (USE_SUPABASE) {
   const { createClient } = require('@supabase/supabase-js');
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('✅ Database: Supabase (persistent)');
+  console.log('✅ Database: Supabase (persistent) + cache fallback');
 } else {
   console.log('⚠️ Database: Local JSON (data will not persist across deploys)');
 }
@@ -88,19 +90,46 @@ function saveLocalData(data) {
 
 async function getClients(filters = {}) {
   if (USE_SUPABASE) {
-    let query = supabase.from('clients').select('*');
-    
-    if (filters.stage) query = query.eq('stage', filters.stage);
-    if (filters.leadSource) query = query.eq('lead_source', filters.leadSource);
-    if (filters.leadType) query = query.eq('lead_type', filters.leadType);
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      query = query.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
-    }
-    
-    const { data, error } = await query.order('updated_at', { ascending: false });
-    if (error) throw error;
-    return data.map(snakeToCamel);
+    const supabaseOp = async () => {
+      let query = supabase.from('clients').select('*');
+      
+      if (filters.stage) query = query.eq('stage', filters.stage);
+      if (filters.leadSource) query = query.eq('lead_source', filters.leadSource);
+      if (filters.leadType) query = query.eq('lead_type', filters.leadType);
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        query = query.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
+      }
+      
+      const { data, error } = await query.order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data.map(snakeToCamel);
+    };
+
+    const cacheFallback = () => {
+      const cached = cache.loadSnapshot();
+      if (!cached) return null;
+      let clients = cached;
+      // Apply filters to cached data
+      if (filters.stage) clients = clients.filter(c => c.stage === filters.stage);
+      if (filters.leadSource) clients = clients.filter(c => c.leadSource === filters.leadSource);
+      if (filters.leadType) clients = clients.filter(c => c.leadType === filters.leadType);
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        clients = clients.filter(c => 
+          (c.firstName || '').toLowerCase().includes(s) ||
+          (c.lastName || '').toLowerCase().includes(s) ||
+          (c.email || '').toLowerCase().includes(s) ||
+          (c.phone || '').includes(s)
+        );
+      }
+      return clients;
+    };
+
+    // Unfiltered calls update the cache; filtered calls don't (partial data)
+    const isFullList = !filters.stage && !filters.leadSource && !filters.leadType && !filters.search;
+    const result = await cache.withFallback(supabaseOp, cacheFallback, { isFullList });
+    return result.data;
   } else {
     const data = loadLocalData();
     let clients = data.clients;
@@ -124,13 +153,24 @@ async function getClients(filters = {}) {
 
 async function getClient(id) {
   if (USE_SUPABASE) {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    return snakeToCamel(data);
+    const supabaseOp = async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return snakeToCamel(data);
+    };
+
+    const cacheFallback = () => {
+      const cached = cache.loadSnapshot();
+      if (!cached) return null;
+      return cached.find(c => c.id === id) || null;
+    };
+
+    const result = await cache.withFallback(supabaseOp, cacheFallback);
+    return result.data;
   } else {
     const data = loadLocalData();
     return data.clients.find(c => c.id === id) || null;
@@ -138,6 +178,9 @@ async function getClient(id) {
 }
 
 async function createClient(clientData) {
+  if (USE_SUPABASE && cache.isReadOnly) {
+    throw new Error('CRM is in read-only mode — Supabase is temporarily unreachable. Try again later.');
+  }
   const client = {
     id: generateId(),
     firstName: clientData.firstName || '',
@@ -196,6 +239,9 @@ async function createClient(clientData) {
 }
 
 async function updateClient(id, updates) {
+  if (USE_SUPABASE && cache.isReadOnly) {
+    throw new Error('CRM is in read-only mode — Supabase is temporarily unreachable. Try again later.');
+  }
   const now = new Date().toISOString();
   
   if (USE_SUPABASE) {
@@ -230,6 +276,9 @@ async function updateClient(id, updates) {
 }
 
 async function deleteClient(id) {
+  if (USE_SUPABASE && cache.isReadOnly) {
+    throw new Error('CRM is in read-only mode — Supabase is temporarily unreachable. Try again later.');
+  }
   if (USE_SUPABASE) {
     const { error } = await supabase
       .from('clients')
@@ -245,6 +294,9 @@ async function deleteClient(id) {
 }
 
 async function addActivity(clientId, activity) {
+  if (USE_SUPABASE && cache.isReadOnly) {
+    throw new Error('CRM is in read-only mode — Supabase is temporarily unreachable. Try again later.');
+  }
   const now = new Date().toISOString();
   const entry = { timestamp: now, ...activity };
   
@@ -486,5 +538,8 @@ module.exports = {
   // Utils
   USE_SUPABASE,
   loadLocalData,
-  saveLocalData
+  saveLocalData,
+  
+  // Cache status
+  getCacheStatus: cache.getReadOnlyStatus,
 };
