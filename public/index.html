@@ -704,6 +704,7 @@
           <label>Lead Source</label>
           <select id="leadSource">
             <option value="Cold Calling">Cold Calling</option>
+            <option value="Browns Landing DM">Browns Landing DM</option>
             <option value="Letter">Letter</option>
             <option value="Sold.com">Sold.com</option>
             <option value="Close AI">Close AI</option>
@@ -1349,13 +1350,14 @@
 
     // CSV Import functions
     const LEAD_SOURCES = [
-      'COLD CALLING', 'LETTER', 'SOLD.COM', 'CLOSE AI', 'OPICITY', 'OPCITY',
+      'COLD CALLING', 'BROWNS LANDING DM', 'LETTER', 'SOLD.COM', 'CLOSE AI', 'OPICITY', 'OPCITY',
       'QAZZOO', 'KVCORE', 'CB LEAD', 'DOOR KNOCKING', 'BUYERS',
       'WEBSITE HOME EVALUATION', 'EDDM', 'RENTER', 'OPEN HOUSE', 'OTHER'
     ];
 
     const SOURCE_MAP = {
-      'COLD CALLING': 'Cold Calling', 'LETTER': 'Letter', 'SOLD.COM': 'Sold.com',
+      'COLD CALLING': 'Cold Calling', 'BROWNS LANDING DM': 'Browns Landing DM',
+      'LETTER': 'Letter', 'SOLD.COM': 'Sold.com',
       'CLOSE AI': 'Close AI', 'OPICITY': 'OPCity', 'OPCITY': 'OPCity',
       'QAZZOO': 'Qazzoo', 'KVCORE': 'KvCORE', 'CB LEAD': 'CB Lead',
       'DOOR KNOCKING': 'Door Knocking', 'BUYERS': 'Buyers',
