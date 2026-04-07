@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const db = require('./services/db');
 const openphone = require('./services/openphone');
 const auth = require('./services/auth');
+const apiAuth = require('./services/api-auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +31,17 @@ app.get('/api/me', (req, res) => {
 });
 
 app.use(auth.authMiddleware);
+app.use(apiAuth.apiAuthMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
+
+// API key info
+app.get('/api/auth/info', (req, res) => {
+  res.json({
+    user: req.apiUser || null,
+    team: apiAuth.getApiUsers(),
+    authMode: process.env.CRM_API_KEYS ? 'api-key' : 'none'
+  });
+});
 
 // ============================================
 // Client API Endpoints

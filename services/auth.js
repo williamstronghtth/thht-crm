@@ -83,9 +83,18 @@ function clearSession(token) {
 }
 
 function authMiddleware(req, res, next) {
-  const publicPaths = new Set(['/healthz', '/login', '/logout']);
+  const publicPaths = new Set(['/healthz', '/login', '/logout', '/api/status']);
   if (publicPaths.has(req.path)) return next();
   if (req.path.startsWith('/assets/') || req.path === '/favicon.ico') return next();
+
+  // If request has an API key header, let API auth middleware handle it
+  if (req.path.startsWith('/api/') && (
+    req.headers['authorization'] ||
+    req.headers['x-api-key'] ||
+    (req.query && req.query.api_key)
+  )) {
+    return next();
+  }
 
   const session = getSession(req.cookies?.[COOKIE_NAME]);
   if (!session) {
