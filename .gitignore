@@ -1,1 +1,5 @@
 node_modules/
+crm.db-shm
+crm.db-wal
+crm.db
+unsubscribed.txt

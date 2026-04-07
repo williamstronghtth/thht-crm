@@ -1,15 +1,35 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 // Import database layer (Supabase when configured, JSON fallback)
 const db = require('./services/db');
 const openphone = require('./services/openphone');
+const auth = require('./services/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.get('/healthz', (req, res) => res.json({ ok: true }));
+app.get('/login', (req, res) => {
+  const fs = require('fs');
+  const html = fs.readFileSync(path.join(__dirname, 'public', 'login.html'), 'utf8');
+  res.type('html').send(html);
+});
+app.post('/login', auth.handleLogin);
+app.post('/logout', auth.handleLogout);
+app.get('/api/me', (req, res) => {
+  const session = auth.getSession(req.cookies?.[auth.COOKIE_NAME]);
+  if (!session) return res.status(401).json({ error: 'Authentication required' });
+  res.json({ user: session, team: auth.getSafeUsers() });
+});
+
+app.use(auth.authMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================
