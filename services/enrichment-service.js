@@ -61,7 +61,7 @@ async function enrichClient(client) {
       console.log(`[Enrichment] Property result for ${id}:`, JSON.stringify(propertyData)); // keep
       if (propertyData) {
         if (propertyData.address) enrichmentData.home_address = propertyData.address;
-        if (propertyData.estimatedValue) enrichmentData.estimated_home_value = propertyData.estimatedValue;
+        if (propertyData.estimatedValue) enrichmentData.home_estimated_value = propertyData.estimatedValue;
         if (propertyData.purchaseDate) enrichmentData.home_purchase_date = propertyData.purchaseDate;
         notes.push('Property: found');
       } else {
