@@ -91,7 +91,8 @@ function saveLocalData(data) {
 async function getClients(filters = {}) {
   if (USE_SUPABASE) {
     const supabaseOp = async () => {
-      let query = supabase.from('clients').select('*');
+      // Supabase defaults to 1000 row limit — override to fetch all clients
+      let query = supabase.from('clients').select('*').range(0, 4999);
       
       if (filters.stage) query = query.eq('stage', filters.stage);
       if (filters.leadSource) query = query.eq('lead_source', filters.leadSource);

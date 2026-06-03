@@ -3,7 +3,7 @@
  * Replaces local JSON file storage with persistent Postgres
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,8 +13,8 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('⚠️ Supabase credentials not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY');
 }
 
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
+const supabase = supabaseUrl && supabaseKey
+  ? createSupabaseClient(supabaseUrl, supabaseKey)
   : null;
 
 /**
@@ -23,8 +23,9 @@ const supabase = supabaseUrl && supabaseKey
 async function getClients(filters = {}) {
   if (!supabase) throw new Error('Supabase not configured');
   
-  let query = supabase.from('clients').select('*');
-  
+  // Supabase defaults to 1000 row limit — override to fetch all clients
+  let query = supabase.from('clients').select('*').range(0, 4999);
+
   if (filters.stage) {
     query = query.eq('stage', filters.stage);
   }
@@ -38,7 +39,7 @@ async function getClients(filters = {}) {
     const s = filters.search.toLowerCase();
     query = query.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
   }
-  
+
   const { data, error } = await query.order('updated_at', { ascending: false });
   
   if (error) throw error;
