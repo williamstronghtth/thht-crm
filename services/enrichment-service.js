@@ -31,47 +31,69 @@ async function enrichClient(client) {
   const { id, firstName, lastName, address } = client;
   const fullName = `${firstName || ''} ${lastName || ''}`.trim();
 
-  if (!fullName) {
-    await updateEnrichmentStatus(id, 'failed', 'No name provided for enrichment');
-    return;
-  }
+  // Bug fix #1: Set status to "processing" immediately
+  console.log(`[Enrichment] Starting enrichment for client ${id} (${fullName})`); // keep
+  await updateEnrichmentStatus(id, 'processing', 'Enrichment in progress');
 
-  const enrichmentData = {};
-  const notes = [];
-
-  // A. LinkedIn URL search
   try {
-    const linkedinUrl = await searchLinkedIn(fullName, address);
-    if (linkedinUrl) {
-      enrichmentData.linkedin_url = linkedinUrl;
-      notes.push('LinkedIn: found');
-    } else {
-      notes.push('LinkedIn: no result');
+    if (!fullName) {
+      await updateEnrichmentStatus(id, 'failed', 'No name provided for enrichment');
+      return;
     }
-  } catch (err) {
-    notes.push(`LinkedIn: error — ${err.message}`);
-  }
 
-  // B. Property lookup (basic — from client address if provided)
-  try {
-    const propertyData = await lookupProperty(address);
-    if (propertyData) {
-      if (propertyData.address) enrichmentData.home_address = propertyData.address;
-      if (propertyData.estimatedValue) enrichmentData.estimated_home_value = propertyData.estimatedValue;
-      if (propertyData.purchaseDate) enrichmentData.home_purchase_date = propertyData.purchaseDate;
-      notes.push('Property: found');
-    } else {
-      notes.push('Property: no data');
+    const enrichmentData = {};
+    const notes = [];
+
+    // A. LinkedIn URL search
+    try {
+      console.log(`[Enrichment] Searching LinkedIn for "${fullName}" (address: ${address || 'none'})`); // keep
+      const linkedinUrl = await searchLinkedIn(fullName, address);
+      console.log(`[Enrichment] LinkedIn result for ${id}: ${linkedinUrl || 'no result'}`); // keep
+      if (linkedinUrl) {
+        enrichmentData.linkedin_url = linkedinUrl;
+        notes.push('LinkedIn: found');
+      } else {
+        notes.push('LinkedIn: no result');
+      }
+    } catch (err) {
+      console.error(`[Enrichment] LinkedIn search error for ${id}:`, err.message); // keep
+      notes.push(`LinkedIn: error — ${err.message}`);
     }
+
+    // B. Property lookup (basic — from client address if provided)
+    try {
+      console.log(`[Enrichment] Looking up property for ${id} (address: ${address || 'none'})`); // keep
+      const propertyData = await lookupProperty(address);
+      console.log(`[Enrichment] Property result for ${id}:`, JSON.stringify(propertyData)); // keep
+      if (propertyData) {
+        if (propertyData.address) enrichmentData.home_address = propertyData.address;
+        if (propertyData.estimatedValue) enrichmentData.estimated_home_value = propertyData.estimatedValue;
+        if (propertyData.purchaseDate) enrichmentData.home_purchase_date = propertyData.purchaseDate;
+        notes.push('Property: found');
+      } else {
+        notes.push('Property: no data');
+      }
+    } catch (err) {
+      console.error(`[Enrichment] Property lookup error for ${id}:`, err.message); // keep
+      notes.push(`Property: error — ${err.message}`);
+    }
+
+    // C. Birthday — skipped for Phase 1
+    notes.push('Birthday: skipped (Phase 1)');
+
+    // Write results to Supabase
+    console.log(`[Enrichment] Writing results to Supabase for ${id}:`, JSON.stringify(enrichmentData)); // keep
+    await updateEnrichmentResult(id, enrichmentData, notes);
+    console.log(`[Enrichment] Enrichment complete for ${id}`); // keep
   } catch (err) {
-    notes.push(`Property: error — ${err.message}`);
+    // Bug fix #2: Catch any unexpected error and set status to "failed"
+    console.error(`[Enrichment] Unexpected failure for ${id}:`, err.message, err.stack); // keep
+    try {
+      await updateEnrichmentStatus(id, 'failed', `Unexpected error: ${err.message}`);
+    } catch (statusErr) {
+      console.error(`[Enrichment] Could not update failure status for ${id}:`, statusErr.message); // keep
+    }
   }
-
-  // C. Birthday — skipped for Phase 1
-  notes.push('Birthday: skipped (Phase 1)');
-
-  // Write results to Supabase
-  await updateEnrichmentResult(id, enrichmentData, notes);
 }
 
 /**
@@ -80,7 +102,8 @@ async function enrichClient(client) {
  */
 async function searchLinkedIn(fullName, location) {
   if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_CX) {
-    return null; // API not configured — skip silently
+    console.log('[Enrichment] Google Search API not configured — skipping LinkedIn search'); // keep
+    return null;
   }
 
   const locationHint = extractCity(location);
@@ -149,9 +172,12 @@ function extractCity(address) {
  */
 async function updateEnrichmentStatus(clientId, status, note) {
   const db = getSupabase();
-  if (!db) return;
+  if (!db) {
+    console.error(`[Enrichment] No Supabase connection — cannot update status for ${clientId}`); // keep
+    return;
+  }
 
-  await db
+  const { error } = await db
     .from('clients')
     .update({
       enrichment_status: status,
@@ -160,6 +186,12 @@ async function updateEnrichmentStatus(clientId, status, note) {
       updated_at: new Date().toISOString(),
     })
     .eq('id', clientId);
+
+  if (error) {
+    // Bug fix #3: Surface Supabase errors instead of swallowing them
+    console.error(`[Enrichment] Status update failed for ${clientId}:`, error.message, error.details); // keep
+    throw new Error(`Supabase status update failed: ${error.message}`);
+  }
 }
 
 /**
@@ -167,7 +199,10 @@ async function updateEnrichmentStatus(clientId, status, note) {
  */
 async function updateEnrichmentResult(clientId, data, notes) {
   const db = getSupabase();
-  if (!db) return;
+  if (!db) {
+    console.error(`[Enrichment] No Supabase connection — cannot write results for ${clientId}`); // keep
+    return;
+  }
 
   const update = {
     ...data,
@@ -177,13 +212,17 @@ async function updateEnrichmentResult(clientId, data, notes) {
     updated_at: new Date().toISOString(),
   };
 
+  console.log(`[Enrichment] Supabase update payload for ${clientId}:`, JSON.stringify(update)); // keep
+
   const { error } = await db
     .from('clients')
     .update(update)
     .eq('id', clientId);
 
   if (error) {
-    console.error(`Enrichment write failed for ${clientId}:`, error.message); // keep
+    // Bug fix #3: Throw so the outer try/catch can set status to "failed"
+    console.error(`[Enrichment] Supabase write failed for ${clientId}:`, error.message, error.details, error.hint); // keep
+    throw new Error(`Enrichment write failed: ${error.message}`);
   }
 }
 

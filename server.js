@@ -89,6 +89,7 @@ app.post('/api/clients', async (req, res) => {
     const client = await db.createClient(req.body);
 
     // Fire async enrichment — don't block the API response
+    // Set status to "processing" first so it doesn't stay stuck on "pending"
     enrichClient(client).catch(err =>
       console.error(`Enrichment failed for ${client.id}:`, err) // keep
     );
