@@ -39,6 +39,18 @@ CREATE TABLE IF NOT EXISTS clients (
   -- Activity log (stored as JSONB array)
   activity_log JSONB DEFAULT '[]'::jsonb,
   
+  -- Enrichment / Intelligence (Phase 1)
+  linkedin_url TEXT,
+  instagram_url TEXT,
+  facebook_url TEXT,
+  birthday DATE,
+  home_address TEXT,
+  home_purchase_date DATE,
+  estimated_home_value INTEGER,
+  enrichment_status TEXT DEFAULT 'pending',
+  enriched_at TIMESTAMPTZ,
+  enrichment_notes TEXT,
+
   -- Timestamps
   last_activity TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),

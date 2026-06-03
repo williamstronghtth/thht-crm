@@ -8,6 +8,7 @@ const db = require('./services/db');
 const openphone = require('./services/openphone');
 const auth = require('./services/auth');
 const apiAuth = require('./services/api-auth');
+const { enrichClient } = require('./services/enrichment-service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,9 +87,57 @@ app.get('/api/clients/:id', async (req, res) => {
 app.post('/api/clients', async (req, res) => {
   try {
     const client = await db.createClient(req.body);
+
+    // Fire async enrichment — don't block the API response
+    enrichClient(client).catch(err =>
+      console.error(`Enrichment failed for ${client.id}:`, err) // keep
+    );
+
     res.status(201).json(client);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET enrichment status for a client
+app.get('/api/clients/:id/enrichment', async (req, res) => {
+  try {
+    const client = await db.getClient(req.params.id);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+
+    res.json({
+      success: true,
+      data: {
+        enrichmentStatus: client.enrichmentStatus || 'pending',
+        enrichedAt: client.enrichedAt || null,
+        enrichmentNotes: client.enrichmentNotes || null,
+        linkedinUrl: client.linkedinUrl || null,
+        instagramUrl: client.instagramUrl || null,
+        facebookUrl: client.facebookUrl || null,
+        birthday: client.birthday || null,
+        homeAddress: client.homeAddress || null,
+        homePurchaseDate: client.homePurchaseDate || null,
+        estimatedHomeValue: client.estimatedHomeValue || null,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST re-run enrichment for an existing client
+app.post('/api/clients/:id/enrich', async (req, res) => {
+  try {
+    const client = await db.getClient(req.params.id);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+
+    enrichClient(client).catch(err =>
+      console.error(`Re-enrichment failed for ${client.id}:`, err) // keep
+    );
+
+    res.json({ success: true, message: 'Enrichment started' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
