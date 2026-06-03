@@ -5,19 +5,13 @@
  * Runs asynchronously after client creation — never blocks the API response.
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabase } = require('./supabase');
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
 const GOOGLE_SEARCH_CX = process.env.GOOGLE_SEARCH_CX;
 
-// Lazy-init Supabase so we can import without env vars in tests
-let supabase = null;
+// Reuse the shared Supabase client from services/supabase.js
 function getSupabase() {
-  if (!supabase && SUPABASE_URL && SUPABASE_KEY) {
-    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
   return supabase;
 }
 
