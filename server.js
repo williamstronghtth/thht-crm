@@ -9,6 +9,7 @@ const openphone = require('./services/openphone');
 const auth = require('./services/auth');
 const apiAuth = require('./services/api-auth');
 const { enrichClient } = require('./services/enrichment-service');
+const { parseQueryToFilter, executeSmartFilter } = require('./services/smart-query');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -237,6 +238,50 @@ app.patch('/api/clients/bulk/leadType', async (req, res) => {
 // GET lead types list
 app.get('/api/leadTypes', (req, res) => {
   res.json({ leadTypes: db.LEAD_TYPES });
+});
+
+// ============================================
+// AI Smart Query
+// ============================================
+
+// POST /api/smart-query — natural language → filtered client list
+app.post('/api/smart-query', async (req, res) => {
+  const { query } = req.body;
+
+  if (!query || typeof query !== 'string' || !query.trim()) {
+    return res.status(400).json({ success: false, error: 'query is required' });
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(500).json({ success: false, error: 'ANTHROPIC_API_KEY is not configured on this server' });
+  }
+
+  let filter = {};
+  try {
+    filter = await parseQueryToFilter(query.trim());
+  } catch (err) {
+    console.error('Smart query — Claude parse error:', err.message); // keep
+    // Graceful fallback: return all clients with an error note
+    return res.status(200).json({
+      success: false,
+      error: 'Could not interpret that query — try rephrasing it.',
+      filter_applied: {},
+      query_used: query
+    });
+  }
+
+  try {
+    const data = await executeSmartFilter(filter, db);
+    return res.json({
+      success: true,
+      data,
+      filter_applied: filter,
+      query_used: query
+    });
+  } catch (err) {
+    console.error('Smart query — DB error:', err.message); // keep
+    return res.status(500).json({ success: false, error: 'Failed to run smart query against database' });
+  }
 });
 
 // GET dashboard stats

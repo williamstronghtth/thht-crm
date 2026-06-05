@@ -544,6 +544,86 @@
       background: var(--accent);
       color: white;
     }
+
+    /* ---- AI Smart Query Bar ---- */
+    .smart-query-bar {
+      padding: 12px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .smart-query-input {
+      flex: 1;
+      min-width: 260px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .smart-query-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .smart-query-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-ai {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      white-space: nowrap;
+    }
+
+    .btn-ai:hover {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    }
+
+    .btn-ai:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .smart-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .smart-filter-badge button {
+      background: none;
+      border: none;
+      color: #a5b4fc;
+      cursor: pointer;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.7;
+    }
+
+    .smart-filter-badge button:hover {
+      opacity: 1;
+    }
+
+    .smart-query-error {
+      color: var(--danger);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -599,6 +679,19 @@
       <div class="count" id="statFollowup">0</div>
       <div class="label">Follow-Up</div>
     </div>
+  </div>
+
+  <!-- AI Smart Query Bar -->
+  <div class="smart-query-bar" id="smartQueryBar">
+    <input
+      type="text"
+      class="smart-query-input"
+      id="smartQueryInput"
+      placeholder="e.g. show me clients from Amherst who haven't been contacted in 30 days"
+      onkeydown="if(event.key==='Enter') runSmartQuery()"
+    >
+    <button class="btn btn-ai" id="smartQueryBtn" onclick="runSmartQuery()">✨ AI Search</button>
+    <div id="smartFilterBadge" style="display:none;"></div>
   </div>
 
   <main id="mainTable">
@@ -1704,6 +1797,109 @@
 
     // Initialize
     loadClients();
+
+    // ============================================
+    // AI Smart Query
+    // ============================================
+
+    // Holds the smart-query result set when active; null means normal mode
+    let smartQueryClients = null;
+
+    async function runSmartQuery() {
+      const input = document.getElementById('smartQueryInput');
+      const btn = document.getElementById('smartQueryBtn');
+      const badge = document.getElementById('smartFilterBadge');
+      const query = input.value.trim();
+
+      if (!query) return;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Searching…';
+      badge.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/smart-query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          badge.style.display = 'flex';
+          badge.innerHTML = `<span class="smart-query-error">⚠️ ${result.error || 'Query failed'}</span>`;
+          return;
+        }
+
+        // Replace displayed clients with smart-query results
+        smartQueryClients = result.data;
+        renderSmartResults(result.data, result.filter_applied, query);
+
+      } catch (err) {
+        badge.style.display = 'flex';
+        badge.innerHTML = `<span class="smart-query-error">⚠️ Network error — please try again</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ AI Search';
+      }
+    }
+
+    function renderSmartResults(data, filter, queryText) {
+      const badge = document.getElementById('smartFilterBadge');
+      const tbody = document.getElementById('clientList');
+
+      // Build human-readable filter summary
+      const parts = Object.entries(filter)
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => `${k}=${v}`);
+      const filterSummary = parts.length ? parts.join(', ') : 'no filters matched';
+
+      badge.style.display = 'flex';
+      badge.innerHTML = `
+        <span>🔍 Filtered: ${filterSummary} — ${data.length} result${data.length !== 1 ? 's' : ''}</span>
+        <button onclick="clearSmartQuery()" title="Clear smart filter">✕</button>
+      `;
+
+      if (data.length === 0) {
+        tbody.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
+        document.querySelector('.client-table').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.querySelector('.client-table').style.display = 'table';
+
+      tbody.innerHTML = data.map(c => {
+        const followUpClass = getFollowUpClass(c.followUpDate);
+        const lastActivity = c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : '-';
+        const leadType = c.leadType || 'cold';
+        const leadTypeLabel = leadType.replace('-', ' ');
+
+        return `
+          <tr onclick="openClient('${c.id}')">
+            <td>
+              <div class="client-name">${c.firstName} ${c.lastName}</div>
+              <div class="client-email">${c.email || '-'}</div>
+            </td>
+            <td>${c.phone ? `<a href="tel:${c.phone}" style="color: var(--accent); text-decoration: none;">${c.phone}</a>` : '-'}</td>
+            <td><span class="lead-type-badge ${leadType}">${leadTypeLabel}</span></td>
+            <td><span class="stage-badge ${c.stage}">${c.stage}</span></td>
+            <td><span class="source-badge">${c.leadSource || '-'}</span></td>
+            <td><span class="followup-date ${followUpClass}">${c.followUpDate || '-'}</span></td>
+            <td>${lastActivity}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function clearSmartQuery() {
+      smartQueryClients = null;
+      document.getElementById('smartQueryInput').value = '';
+      document.getElementById('smartFilterBadge').style.display = 'none';
+      renderClients(); // restore normal view
+    }
   </script>
 </body>
 </html>
