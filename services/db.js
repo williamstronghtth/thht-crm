@@ -10,13 +10,19 @@ const cache = require('./cache');
 
 // Check for Supabase configuration
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+// This module runs only on the CRM server. Never expose this key to clients.
+const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (SUPABASE_URL && !SUPABASE_KEY) {
+  throw new Error('Supabase requires a server-only credential; anonymous fallback is disabled');
+}
 const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
 
 let supabase = null;
 if (USE_SUPABASE) {
   const { createClient } = require('@supabase/supabase-js');
-  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
   console.log('✅ Database: Supabase (persistent) + cache fallback');
 } else {
   console.log('⚠️ Database: Local JSON (data will not persist across deploys)');

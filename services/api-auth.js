@@ -3,7 +3,7 @@
  * 
  * Supports two modes:
  * 1. API key auth for programmatic/agent access (header-based)
- * 2. No-auth browser access for Chris at the existing Render URL
+ * 2. Browser sessions authenticated by the preceding auth middleware
  * 
  * Config via env:
  *   CRM_API_KEYS = JSON array of {key, name, role}
@@ -72,15 +72,11 @@ function extractKey(req) {
  * API auth middleware
  * 
  * Strategy:
- * - If CRM_API_KEYS is not set: no auth enforced (backward compatible)
- * - If CRM_API_KEYS is set:
- *   - API requests (Accept: application/json or /api/* paths) require valid key
- *   - Browser requests (HTML) pass through for Chris's direct access
+ * - Browser sessions pass through after authentication.
+ * - Other API requests always require a valid configured key, even when the
+ *   key configuration is missing or invalid (fail closed).
  */
 function apiAuthMiddleware(req, res, next) {
-  // If no API keys configured, skip auth entirely (backward compatible)
-  if (apiKeys.length === 0) return next();
-  
   // Health/status endpoints are always public
   const publicPaths = ['/healthz', '/api/status', '/login', '/logout'];
   if (publicPaths.includes(req.path)) return next();
